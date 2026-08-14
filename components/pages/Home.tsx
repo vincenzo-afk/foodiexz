@@ -8,11 +8,36 @@ import { RestaurantCard } from "../RestaurantCard"
 import { PromoCarousel } from "../PromoCarousel"
 import { FilterPanel } from "../FilterPanel"
 
+// One-tap quick filters — a standard shortcut on every major delivery app.
+const quickChips = [
+  { label: "All", cuisines: [] },
+  { label: "Veg", cuisines: ["Veg"] },
+  { label: "Indian", cuisines: ["Indian", "North Indian", "Mughlai", "South Indian"] },
+  { label: "Chinese", cuisines: ["Chinese", "Asian", "Thai"] },
+  { label: "Pizza & Pasta", cuisines: ["Pizza", "Pasta", "Italian"] },
+  { label: "Burgers", cuisines: ["Burgers", "American", "Fast Food"] },
+  { label: "Japanese", cuisines: ["Japanese", "Sushi"] },
+  { label: "Mexican", cuisines: ["Mexican", "Tex-Mex"] },
+]
+
+// Sort options: rating · delivery time · distance · cost for two (default: Recommended).
+type SortKey = "recommended" | "rating" | "deliveryTime" | "distance" | "priceForTwo"
+const sortOptions: { key: SortKey; label: string }[] = [
+  { key: "recommended", label: "Recommended" },
+  { key: "rating", label: "Rating" },
+  { key: "deliveryTime", label: "Fastest delivery" },
+  { key: "distance", label: "Nearest" },
+  { key: "priceForTwo", label: "Cost: low to high" },
+]
+
 export function Home() {
   const navigate = useNavigate()
-  const { filters, searchQuery, setSearchQuery } = useStore()
+  const { filters, setFilters, searchQuery, setSearchQuery } = useStore()
   const [restaurants, setRestaurants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [sortKey, setSortKey] = useState<SortKey>("recommended")
+  const [activeChip, setActiveChip] = useState(0)
+  const [isVegChip, setIsVegChip] = useState(false)
 
   useEffect(() => {
     api.getRestaurants().then((data) => {
@@ -35,6 +60,10 @@ export function Home() {
     if (filters.cuisine.length > 0) {
       result = result.filter((r) => r.cuisine?.some((c: string) => filters.cuisine.includes(c)))
     }
+    if (isVegChip) {
+      // "Veg" chip: restaurants with at least some veg dishes (Zomato-style veg-friendly filter).
+      result = result.filter((r) => r.dishes?.some((d: any) => d.isVeg))
+    }
     if (filters.rating) {
       result = result.filter((r) => r.rating >= filters.rating!)
     }
@@ -43,13 +72,38 @@ export function Home() {
         (r) => r.priceForTwo >= filters.priceRange![0] && r.priceForTwo <= filters.priceRange![1],
       )
     }
-    if (filters.sortBy === "rating") result.sort((a, b) => b.rating - a.rating)
-    if (filters.sortBy === "deliveryTime") {
+    // Recommended = highest rating first, breaking ties by nearest distance.
+    if (sortKey === "recommended" || sortKey === "rating") {
+      result.sort((a, b) => b.rating - a.rating || (a.distanceKm ?? 99) - (b.distanceKm ?? 99))
+    }
+    if (sortKey === "deliveryTime") {
       result.sort((a, b) => parseInt(a.deliveryTime) - parseInt(b.deliveryTime))
     }
-    if (filters.sortBy === "priceForTwo") result.sort((a, b) => a.priceForTwo - b.priceForTwo)
+    if (sortKey === "distance") result.sort((a, b) => (a.distanceKm ?? 99) - (b.distanceKm ?? 99))
+    if (sortKey === "priceForTwo") result.sort((a, b) => a.priceForTwo - b.priceForTwo)
     return result
-  }, [restaurants, searchQuery, filters])
+  }, [restaurants, searchQuery, filters, sortKey, isVegChip])
+
+  // Quick-filter chips: replace the store's cuisine filter in one tap.
+  // The "Veg" chip (index 1) is handled in the filter pipeline itself.
+  // "All" behaves like the Filters panel's Clear so quick chips never combine
+  // with stale persisted rating/price filters from a previous session.
+  // The Veg chip uses an explicit state (isVegChip) rather than a fake "Veg"
+  // cuisine, so the cuisine filter never silently wipes the whole list.
+  const applyChip = (index: number) => {
+    const chip = quickChips[index]
+    setActiveChip(index)
+    if (index === 0) {
+      setIsVegChip(false)
+      setFilters({ cuisine: [], rating: null, priceRange: null })
+    } else if (index === 1) {
+      setIsVegChip(true)
+      setFilters({ cuisine: [], rating: null, priceRange: null })
+    } else {
+      setIsVegChip(false)
+      setFilters({ cuisine: chip.cuisines })
+    }
+  }
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -102,14 +156,50 @@ export function Home() {
           <PromoCarousel />
         </section>
 
+        {/* Quick filters + sort */}
+        <section className="mb-8">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+            {quickChips.map((chip, i) => (
+              <button
+                key={chip.label}
+                onClick={() => applyChip(i)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap border transition-colors ${
+                  activeChip === i
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card border-border text-foreground hover:border-primary/50"
+                }`}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
         {/* Restaurants */}
         <section>
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
             <div>
               <h2 className="text-2xl font-bold">Restaurants Near You</h2>
               <p className="text-sm text-muted-foreground">{filtered.length} options available</p>
             </div>
-            <FilterPanel />
+            <div className="flex items-center gap-2">
+              <FilterPanel />
+              <div className="flex items-center gap-1 border border-border rounded-full bg-card p-1">
+                {sortOptions.map((s) => (
+                  <button
+                    key={s.key}
+                    onClick={() => setSortKey(s.key)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                      sortKey === s.key
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {loading ? (
@@ -122,7 +212,12 @@ export function Home() {
             <div className="text-center py-16 text-muted-foreground">
               <p className="text-lg">No restaurants match your search.</p>
               <button
-                onClick={() => setSearchQuery("")}
+                onClick={() => {
+                  setSearchQuery("")
+                  setFilters({ cuisine: [], rating: null, priceRange: null })
+                  setActiveChip(0)
+                  setSortKey("recommended")
+                }}
                 className="mt-3 text-primary underline"
               >
                 Clear filters

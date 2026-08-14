@@ -1,19 +1,30 @@
 "use client"
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
+import dynamic from "next/dynamic"
 import { MapPin, Plus, Check, Trash2, ArrowLeft } from "lucide-react"
 import { api } from "../../lib/api"
 import { useStore, type Address } from "../../store/useStore"
 import { Button } from "../ui/button"
 import { toast } from "sonner"
 
+// Leaflet uses browser-only APIs (window/document) — load with ssr:false like the
+// order-tracking map.
+const AddressMap = dynamic(() => import("../AddressMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[260px] w-full rounded-xl border border-border bg-muted animate-pulse" />
+  ),
+})
+
 export function Addresses() {
-  const { user, isAuthenticated, addAddress, deleteAddress, setDefaultAddress } = useStore()
+  const { user, isAuthenticated, deleteAddress, setDefaultAddress } = useStore()
   const [list, setList] = useState<Address[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Address | null>(null)
   const [form, setForm] = useState({ type: "Home", address: "", landmark: "" })
+  const [pin, setPin] = useState<{ lat: number; lng: number } | null>(null)
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -46,9 +57,11 @@ export function Addresses() {
       }
     } else {
       try {
-        await api.createAddress(form)
+        await api.createAddress({ ...form, lat: pin?.lat, lng: pin?.lng })
         const newAddr: Address = {
           ...form,
+          lat: pin?.lat,
+          lng: pin?.lng,
           id: "ADDR" + Date.now(),
           isDefault: list.length === 0,
         }
@@ -134,6 +147,17 @@ export function Addresses() {
             value={form.landmark}
             onChange={(e) => setForm((v) => ({ ...v, landmark: e.target.value }))}
           />
+          <p className="text-xs font-medium text-muted-foreground">Pin your location on the map</p>
+          <AddressMap position={pin} onSelect={setPin} />
+          {pin && (
+            <button
+              type="button"
+              onClick={() => setPin(null)}
+              className="text-xs text-muted-foreground hover:text-foreground underline"
+            >
+              Clear pin
+            </button>
+          )}
           <div className="flex gap-2">
             <Button size="sm" onClick={handleSave}>
               Save

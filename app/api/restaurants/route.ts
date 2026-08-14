@@ -20,6 +20,17 @@ function formatRestaurant(r: any) {
     closeTime: r.closeTime,
     lat: r.lat ?? null,
     lng: r.lng ?? null,
+    dishes: db.getDishesByRestaurant(r.id).map((d) => ({
+      id: d.id,
+      name: d.name,
+      price: d.price,
+      image: d.image,
+      isVeg: d.isVeg,
+      category: d.category,
+      rating: d.rating,
+      bestseller: d.bestseller,
+      customizable: d.customizable,
+    })),
   }
 }
 

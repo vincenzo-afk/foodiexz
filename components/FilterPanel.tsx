@@ -45,7 +45,7 @@ export function FilterPanel() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors relative"
+        className="flex items-center gap-2 px-4 py-2 bg-background border border-border rounded-lg hover:bg-accent transition-colors relative"
       >
         <Filter className="w-4 h-4" />
         <span>Filters</span>
@@ -72,13 +72,13 @@ export function FilterPanel() {
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25 }}
-              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col"
+              className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-background shadow-2xl z-50 flex flex-col"
             >
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div className="p-4 border-b border-border flex items-center justify-between">
                 <h2>Filters</h2>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2 hover:bg-accent rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -145,7 +145,7 @@ export function FilterPanel() {
                       onValueChange={(value) => setTempFilters({ ...tempFilters, priceRange: value as [number, number] })}
                       className="mb-4"
                     />
-                    <div className="flex justify-between text-gray-600">
+                    <div className="flex justify-between text-muted-foreground">
                       <span>₹{tempFilters.priceRange?.[0] || 0}</span>
                       <span>₹{tempFilters.priceRange?.[1] || 1000}</span>
                     </div>
@@ -175,10 +175,10 @@ export function FilterPanel() {
                 </div>
               </div>
               
-              <div className="p-4 border-t border-gray-200 flex gap-3">
+              <div className="p-4 border-t border-border flex gap-3">
                 <button
                   onClick={handleClear}
-                  className="flex-1 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-6 py-3 border border-border rounded-lg hover:bg-accent transition-colors"
                 >
                   Clear All
                 </button>

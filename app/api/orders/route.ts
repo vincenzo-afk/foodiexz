@@ -36,6 +36,8 @@ export async function POST(req: Request) {
         name: item.name,
         price: item.price,
         quantity: item.quantity,
+        isVeg: item.isVeg,
+        image: item.image,
       })),
     )
     return NextResponse.json({ orderId })
@@ -57,6 +59,7 @@ export async function GET(req: NextRequest) {
       name: i.name,
       price: i.price,
       quantity: i.quantity,
+      isVeg: i.isVeg,
     })),
     total: o.total,
     status: o.status,

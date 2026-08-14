@@ -22,9 +22,9 @@ export function NotificationPanel() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="relative p-2 hover:bg-gray-100 rounded-full transition-colors"
+        className="relative p-2 hover:bg-accent rounded-full transition-colors"
       >
-        <Bell className="w-6 h-6 text-gray-700" />
+        <Bell className="w-6 h-6 text-foreground" />
         {unreadCount > 0 && (
           <motion.span
             initial={{ scale: 0 }}
@@ -54,21 +54,21 @@ export function NotificationPanel() {
               transition={{ type: 'spring', damping: 25 }}
               className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-2xl z-50 flex flex-col"
             >
-              <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+              <div className="p-4 border-b border-border flex items-center justify-between">
                 <h2>Notifications</h2>
                 <div className="flex items-center gap-2">
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllNotificationsAsRead}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="p-2 hover:bg-accent rounded-lg transition-colors"
                       title="Mark all as read"
                     >
-                      <CheckCheck className="w-5 h-5 text-gray-600" />
+                      <CheckCheck className="w-5 h-5 text-muted-foreground" />
                     </button>
                   )}
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="p-2 hover:bg-accent rounded-lg transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -79,12 +79,12 @@ export function NotificationPanel() {
                 {notifications.length === 0 ? (
                   <div className="flex items-center justify-center h-full text-center p-6">
                     <div>
-                      <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500">No notifications yet</p>
+                      <Bell className="w-16 h-16 text-muted-foreground/60 mx-auto mb-4" />
+                      <p className="text-muted-foreground">No notifications yet</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-100">
+                  <div className="divide-y divide-border">
                     {notifications.map((notification, index) => (
                       <motion.div
                         key={notification.id}
@@ -97,7 +97,7 @@ export function NotificationPanel() {
                             setIsOpen(false);
                           }
                         }}
-                        className={`p-4 hover:bg-gray-50 transition-colors ${
+                        className={`p-4 hover:bg-accent transition-colors ${
                           !notification.read ? 'bg-orange-50/50' : ''
                         } ${notification.link ? 'cursor-pointer' : ''}`}
                       >
@@ -127,8 +127,8 @@ function NotificationContent({ notification, getIcon }: any) {
       <span className="text-2xl flex-shrink-0">{getIcon(notification.type)}</span>
       <div className="flex-1">
         <h3 className="mb-1">{notification.title}</h3>
-        <p className="text-gray-600 mb-1">{notification.message}</p>
-        <p className="text-gray-400">
+        <p className="text-muted-foreground mb-1">{notification.message}</p>
+        <p className="text-muted-foreground/60">
           {new Date(notification.createdAt).toLocaleString('en-IN', {
             hour: '2-digit',
             minute: '2-digit',

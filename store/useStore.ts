@@ -570,6 +570,7 @@ export const useStore = create<AppState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
         cart: state.cart,
+        filters: state.filters,
         favorites: state.favorites,
         orders: state.orders,
         reviews: state.reviews,

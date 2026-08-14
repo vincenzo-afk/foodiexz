@@ -75,7 +75,7 @@ export function RestaurantCard({ restaurant }: RestaurantCardProps) {
 
           {restaurant.rating >= 4.7 && (
             <div className="absolute top-3 left-3">
-              <Badge className="bg-green-600 hover:bg-green-600">
+              <Badge className="bg-emerald-600 hover:bg-emerald-600">
                 <TrendingUp className="w-3 h-3 mr-1" /> Top Rated
               </Badge>
             </div>
@@ -103,7 +103,7 @@ export function RestaurantCard({ restaurant }: RestaurantCardProps) {
 
           <div className="flex items-center justify-between text-sm mb-3 gap-2">
             <div className="flex items-center gap-1.5">
-              <div className="flex items-center gap-0.5 bg-green-600 text-white px-2 py-1 rounded">
+              <div className="flex items-center gap-0.5 bg-primary text-primary-foreground px-2 py-1 rounded">
                 <Star className="w-3.5 h-3.5 fill-white" />
                 <span className="font-semibold">{restaurant.rating}</span>
               </div>

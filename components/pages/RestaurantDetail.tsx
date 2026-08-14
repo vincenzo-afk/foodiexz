@@ -14,6 +14,8 @@ export function RestaurantDetail() {
   const [restaurant, setRestaurant] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState<string>("All")
+  const [vegOnly, setVegOnly] = useState(false)
+  const [priceSort, setPriceSort] = useState<"none" | "asc" | "desc">("none")
 
   useEffect(() => {
     if (id) {
@@ -32,9 +34,13 @@ export function RestaurantDetail() {
   }, [restaurant])
 
   const visibleDishes = useMemo(() => {
-    const dishes = restaurant?.dishes || []
-    return category === "All" ? dishes : dishes.filter((d: any) => d.category === category)
-  }, [restaurant, category])
+    let dishes = restaurant?.dishes || []
+    if (category !== "All") dishes = dishes.filter((d: any) => d.category === category)
+    if (vegOnly) dishes = dishes.filter((d: any) => d.isVeg)
+    if (priceSort === "asc") dishes = [...dishes].sort((a: any, b: any) => a.price - b.price)
+    if (priceSort === "desc") dishes = [...dishes].sort((a: any, b: any) => b.price - a.price)
+    return dishes
+  }, [restaurant, category, vegOnly, priceSort])
 
   if (loading) {
     return (
@@ -99,7 +105,7 @@ export function RestaurantDetail() {
       {/* Info bar */}
       <div className="max-w-4xl mx-auto px-4 py-5 flex flex-wrap gap-4 text-sm">
         <span className="flex items-center gap-1.5">
-          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+          <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
           <span className="font-semibold">{restaurant.rating}</span>
           <span className="text-muted-foreground">({restaurant.totalRatings} ratings)</span>
         </span>
@@ -149,7 +155,7 @@ export function RestaurantDetail() {
         </div>
 
         {/* Category tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto pb-3 mb-2 scrollbar-none">
           {categories.map((c) => (
             <button
               key={c}
@@ -163,6 +169,39 @@ export function RestaurantDetail() {
               {c}
             </button>
           ))}
+        </div>
+
+        {/* Veg-only toggle + price sort — standard menu controls */}
+        <div className="flex items-center gap-3 mb-6">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={vegOnly}
+              onChange={(e) => setVegOnly(e.target.checked)}
+              className="w-4 h-4 accent-primary"
+            />
+            <span className="flex items-center gap-1.5 text-sm">
+              <span className="w-3.5 h-3.5 border-2 border-green-700 rounded-[3px] flex items-center justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-700" />
+              </span>
+              Veg only
+            </span>
+          </label>
+          <span className="text-xs text-muted-foreground">|</span>
+          <span className="text-sm">Price:</span>
+          <div className="flex items-center gap-1 border border-border rounded-full bg-card p-0.5">
+            {(["none", "asc", "desc"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => setPriceSort(s)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                  priceSort === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {s === "none" ? "Default" : s === "asc" ? "Low to high" : "High to low"}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col gap-4">

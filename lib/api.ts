@@ -217,11 +217,25 @@ export const api = {
     }
   },
 
-  submitReview: async (orderId: string, rating: number, comment: string) => {
+  cancelOrder: async (orderId: string) => {
+    try {
+      const res = await fetch(`/api/orders/${orderId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.message || "Failed to cancel order")
+      return data
+    } catch (err) {
+      throw err
+    }
+  },
+
+  submitReview: async (orderId: string, rating: number, review: string) => {
     try {
       return await apiFetch(`/orders/${orderId}/review`, {
         method: "POST",
-        body: JSON.stringify({ rating, comment }),
+        body: JSON.stringify({ rating, review }),
       })
     } catch (err) {
       throw err

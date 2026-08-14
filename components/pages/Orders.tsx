@@ -1,7 +1,8 @@
 "use client"
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
-import { Package, Star, Timer } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { Package, Star, Timer, RotateCcw, Ban } from "lucide-react"
+import { StarRating } from "../StarRating"
 import { api } from "../../lib/api"
 import { useStore } from "../../store/useStore"
 import { Button } from "../ui/button"
@@ -15,7 +16,8 @@ const statusColors: Record<string, string> = {
 }
 
 export function Orders() {
-  const { isAuthenticated, user } = useStore()
+  const navigate = useNavigate()
+  const { isAuthenticated, user, addToCart, clearCart } = useStore()
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [ratingFor, setRatingFor] = useState<string | null>(null)
@@ -32,6 +34,41 @@ export function Orders() {
       setLoading(false)
     }
   }, [isAuthenticated])
+
+  // Reorder: same items from the same restaurant, exactly like the real apps do.
+  const handleReorder = async (order: any) => {
+    const data = await api.getOrderById(order.id)
+    const fullOrder = data as any
+    if (!fullOrder?.items || fullOrder.items.length === 0) {
+      toast.error("Could not load this order's items")
+      return
+    }
+    clearCart()
+    for (const item of fullOrder.items) {
+      addToCart({
+        dishId: item.dishId || item.name,
+        name: item.name,
+        price: item.price,
+        image: item.image || "",
+        restaurantId: fullOrder.restaurantId,
+        restaurantName: fullOrder.restaurantName,
+        isVeg: item.isVeg ?? true,
+      })
+    }
+    toast.success(`Reordered ${fullOrder.items.length} item(s) from ${fullOrder.restaurantName}`)
+    navigate("/cart")
+  }
+
+  // Cancel: allowed before the rider is on the way. Once on-the-way, cancellation is locked.
+  const handleCancel = async (orderId: string) => {
+    try {
+      await api.cancelOrder(orderId)
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: "cancelled" } : o)))
+      toast.success("Order cancelled")
+    } catch (err: any) {
+      toast.error(err?.message || "Could not cancel this order")
+    }
+  }
 
   const handleRate = async (orderId: string) => {
     try {
@@ -120,40 +157,61 @@ export function Orders() {
                       <Button variant="outline" size="sm" asChild>
                         <Link to={`/order/${order.id}`}>Track</Link>
                       </Button>
+                      {order.status === "preparing" && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive border-destructive/40 hover:bg-destructive/5"
+                          onClick={() => handleCancel(order.id)}
+                        >
+                          <Ban className="w-3.5 h-3.5" /> Cancel
+                        </Button>
+                      )}
                     </div>
                   ) : (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/order/${order.id}`}>View</Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/order/${order.id}`}>View</Link>
+                      </Button>
+                      {order.status === "delivered" && (
+                        <Button variant="outline" size="sm" onClick={() => handleReorder(order)}>
+                          <RotateCcw className="w-3.5 h-3.5" /> Reorder
+                        </Button>
+                      )}
+                    </div>
                   )}
-                  {order.status === "delivered" && !order.rating && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-accent-foreground"
-                      onClick={() => setRatingFor(order.id)}
-                    >
-                      <Star className="w-3.5 h-3.5" /> Rate
-                    </Button>
+                  {order.status === "delivered" && (
+                    <>
+                      {order.rating ? (
+                        <span className="inline-flex items-center gap-1 text-sm">
+                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                          <span className="font-medium">{order.rating}</span>
+                          <span className="text-muted-foreground">Rated</span>
+                        </span>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-accent-foreground"
+                          onClick={() => setRatingFor(order.id)}
+                        >
+                          <Star className="w-3.5 h-3.5" /> Rate
+                        </Button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
+              {order.review && ratingFor !== order.id && (
+                <p className="text-sm text-muted-foreground border-t border-border pt-3 mt-3 italic">
+                  “{order.review}”
+                </p>
+              )}
+
               {ratingFor === order.id && (
                 <div className="mt-4 border-t border-border pt-4 space-y-3">
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((n) => (
-                      <button key={n} onClick={() => setRating(n)}>
-                        <Star
-                          className={`w-6 h-6 ${
-                            n <= rating
-                              ? "fill-yellow-400 text-yellow-400"
-                              : "text-muted-foreground"
-                          }`}
-                        />
-                      </button>
-                    ))}
-                  </div>
+                  <StarRating value={rating} size={24} onChange={setRating} />
                   <input
                     className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-background"
                     placeholder="Write a review (optional)"

@@ -87,6 +87,8 @@ export interface DbOrderItem {
   name: string
   price: number
   quantity: number
+  isVeg?: boolean
+  image?: string
 }
 
 export interface DbFavorite {

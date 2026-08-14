@@ -12,12 +12,12 @@ export async function POST(
 
   try {
     const body = await req.json()
-    const { rating, comment } = body
+    const { rating, review } = body
     const order = db.getOrderById(id)
     if (!order || order.userId !== auth.userId) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 })
     }
-    db.updateOrder(id, { rating, review: comment })
+    db.updateOrder(id, { rating, review })
     return NextResponse.json({ success: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 })

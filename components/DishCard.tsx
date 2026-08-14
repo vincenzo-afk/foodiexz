@@ -70,12 +70,12 @@ export function DishCard({ dish, restaurantName = "Restaurant" }: DishCardProps)
           </div>
           
           <h3 className="mb-1">{dish.name}</h3>
-          <p className="text-gray-600 mb-2 line-clamp-2">{dish.description}</p>
+          <p className="text-muted-foreground mb-2 line-clamp-2">{dish.description}</p>
           
           <div className="flex items-center gap-3 mb-3">
-            <span className="text-gray-900">₹{dish.price}</span>
-            <div className="flex items-center gap-1 text-gray-600">
-              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+            <span className="text-foreground">₹{dish.price}</span>
+            <div className="flex items-center gap-1 text-muted-foreground">
+              <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
               <span>{dish.rating}</span>
             </div>
           </div>
@@ -122,7 +122,7 @@ export function DishCard({ dish, restaurantName = "Restaurant" }: DishCardProps)
       </div>
       
       {dish.customizable && (
-        <p className="text-gray-500 mt-4 border-t border-gray-100 pt-2">
+        <p className="text-muted-foreground mt-4 border-t border-border pt-2">
           Customizable
         </p>
       )}
