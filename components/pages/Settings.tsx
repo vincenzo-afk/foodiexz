@@ -47,7 +47,7 @@ export function Settings() {
         {/* Dietary preference */}
         <section className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3">
-            <Leaf className="w-5 h-5 text-green-600" />
+            <Leaf className="w-5 h-5 text-primary" />
             <h2 className="font-bold">Dietary Preference</h2>
           </div>
           <p className="text-sm text-muted-foreground mb-4">

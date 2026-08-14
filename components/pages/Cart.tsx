@@ -80,19 +80,19 @@ export function Cart() {
                 <h3 className="font-medium">{item.name}</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-2">{item.restaurantName}</p>
-              <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between">
                 <span className="font-semibold">₹{item.price}</span>
-                <div className="flex items-center gap-3 bg-card border-2 border-orange-500 rounded-lg">
+                <div className="flex items-center gap-3 bg-card border-2 border-primary rounded-lg">
                   <button
                     onClick={() => updateQuantity(item.dishId, item.quantity - 1)}
-                    className="px-3 py-1.5 text-orange-500 hover:bg-orange-50 rounded-l-lg transition-colors"
+                    className="px-3 py-1.5 text-primary hover:bg-primary/10 rounded-l-lg transition-colors"
                   >
                     <Minus className="w-3.5 h-3.5" />
                   </button>
-                  <span className="text-orange-500 font-medium">{item.quantity}</span>
+                  <span className="text-primary font-medium">{item.quantity}</span>
                   <button
                     onClick={() => updateQuantity(item.dishId, item.quantity + 1)}
-                    className="px-3 py-1.5 text-orange-500 hover:bg-orange-50 rounded-r-lg transition-colors"
+                    className="px-3 py-1.5 text-primary hover:bg-primary/10 rounded-r-lg transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5" />
                   </button>
@@ -119,7 +119,7 @@ export function Cart() {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Delivery Fee</span>
-            <span>{deliveryFee === 0 && subtotal > 0 ? <span className="text-green-600">FREE</span> : `₹${deliveryFee}`}</span>
+            <span>{deliveryFee === 0 && subtotal > 0 ? <span className="text-emerald-600 dark:text-emerald-400">FREE</span> : `₹${deliveryFee}`}</span>
           </div>
           {multiFee > 0 && (
             <div className="flex justify-between">

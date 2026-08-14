@@ -18,6 +18,18 @@ import { Offers } from "./components/pages/Offers"
 import { Addresses } from "./components/pages/Addresses"
 import { Settings } from "./components/pages/Settings"
 import { NotFound } from "./components/pages/NotFound"
+import { About } from "./components/pages/info/About"
+import { Careers } from "./components/pages/info/Careers"
+import { Team } from "./components/pages/info/Team"
+import { Blog } from "./components/pages/info/Blog"
+import { Help } from "./components/pages/info/Help"
+import { Contact } from "./components/pages/info/Contact"
+import { Partner } from "./components/pages/info/Partner"
+import { FAQ } from "./components/pages/info/FAQ"
+import { Terms } from "./components/pages/info/Terms"
+import { Privacy } from "./components/pages/info/Privacy"
+import { Refund } from "./components/pages/info/Refund"
+import { Cookie } from "./components/pages/info/Cookie"
 import { Toaster } from "./components/ui/sonner"
 import { SplashScreen } from "./components/SplashScreen"
 import { useState, useEffect } from "react"
@@ -56,6 +68,18 @@ export default function App() {
               <Route path="/offers" element={<Offers />} />
               <Route path="/addresses" element={<Addresses />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/team" element={<Team />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/partner" element={<Partner />} />
+              <Route path="/faq" element={<FAQ />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/refund" element={<Refund />} />
+              <Route path="/cookie" element={<Cookie />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>

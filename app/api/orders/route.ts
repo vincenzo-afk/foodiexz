@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { db } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
+import { haversine } from "@/lib/db"
 
 export async function POST(req: Request) {
   const auth = await requireAuth(req as any)
@@ -10,6 +11,8 @@ export async function POST(req: Request) {
     const body = await req.json()
     const { restaurantId, restaurantName, total, paymentMethod, deliveryAddress, items } = body
     const orderId = "ORD" + Date.now()
+    const restaurant = db.getRestaurantById(restaurantId)
+    const addr = deliveryAddress || {}
     db.createOrder(
       {
         id: orderId,
@@ -18,8 +21,13 @@ export async function POST(req: Request) {
         restaurantName,
         total,
         paymentMethod,
-        deliveryAddress: JSON.stringify(deliveryAddress || {}),
+        deliveryAddress: JSON.stringify(addr),
+        deliveryLat: addr.lat || undefined,
+        deliveryLng: addr.lng || undefined,
+        restaurantLat: restaurant?.lat,
+        restaurantLng: restaurant?.lng,
         status: "preparing",
+        statusHistory: [{ status: "preparing", at: Date.now() }],
         createdAt: new Date().toISOString(),
       },
       (items || []).map((item: any) => ({
@@ -53,6 +61,15 @@ export async function GET(req: NextRequest) {
     total: o.total,
     status: o.status,
     createdAt: o.createdAt,
+    etaMinutes: (() => {
+      if (o.status === "delivered") return 0
+      const km =
+        o.restaurantLat && o.deliveryLat
+          ? haversine({ lat: o.restaurantLat, lng: o.restaurantLng! }, { lat: o.deliveryLat, lng: o.deliveryLng! })
+          : 3
+      const remaining = km * (1 - Math.min(1, (Date.now() - new Date(o.createdAt).getTime()) / 60000 / 8))
+      return Math.max(1, Math.round((remaining / 30) * 60))
+    })(),
     paymentMethod: o.paymentMethod,
     rating: o.rating,
     review: o.review,

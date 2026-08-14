@@ -1,8 +1,26 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 
-export async function GET() {
-  return NextResponse.json(db.getOffers())
+export async function GET(req: Request) {
+  const url = new URL(req.url)
+  const totalParam = url.searchParams.get("total")
+  const orderTotal = totalParam ? parseFloat(totalParam) : null
+
+  const offers = db.getOffers().map((o) => {
+    if (orderTotal == null) return { ...o, canApply: false, discountAmount: 0 }
+    const canApply = orderTotal >= o.minOrder
+    let discountAmount = 0
+    if (canApply) {
+      if (o.discountPercent) {
+        discountAmount = Math.min((orderTotal * o.discountPercent) / 100, o.maxDiscount)
+      } else {
+        discountAmount = o.maxDiscount
+      }
+    }
+    return { ...o, canApply, discountAmount: Math.round(discountAmount) }
+  })
+
+  return NextResponse.json(offers)
 }
 
 export async function POST(req: Request) {

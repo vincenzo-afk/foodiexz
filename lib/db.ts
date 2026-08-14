@@ -18,6 +18,8 @@ export interface DbRestaurant {
   totalRatings: string
   description: string
   address: string
+  lat?: number
+  lng?: number
   openTime: string
   closeTime: string
 }
@@ -53,6 +55,8 @@ export interface DbAddress {
   type?: string
   address: string
   landmark?: string
+  lat?: number
+  lng?: number
   isDefault: boolean
 }
 
@@ -64,10 +68,16 @@ export interface DbOrder {
   total: number
   paymentMethod: string
   deliveryAddress: string
+  deliveryLat?: number
+  deliveryLng?: number
+  restaurantLat?: number
+  restaurantLng?: number
   status: string
+  statusHistory: { status: string; at: number }[]
   rating?: number
   review?: string
   createdAt: string
+  deliveryFee?: number
 }
 
 export interface DbOrderItem {
@@ -92,10 +102,13 @@ export interface DbOffer {
   maxDiscount: number
   discountPercent: number | null
   validTill: string
+  type?: string
 }
 
 const restaurants: DbRestaurant[] = seedRestaurants.map((r) => ({
   ...r,
+  lat: r.lat,
+  lng: r.lng,
   cuisine: r.cuisine,
   deliveryTime: r.deliveryTime,
   priceForTwo: r.priceForTwo,
@@ -117,7 +130,86 @@ const offers: DbOffer[] = seedOffers.map((o) => ({
   minOrder: o.minOrder,
   maxDiscount: o.maxDiscount,
   discountPercent: o.discountPercent,
+  type: o.type,
 }))
+
+// ---------- Live tracking helpers ----------
+
+export interface GeoPoint {
+  lat: number
+  lng: number
+}
+
+/** Haversine distance in km between two points. */
+export function haversine(a: GeoPoint, b: GeoPoint): number {
+  const R = 6371
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180
+  const dLng = ((b.lng - a.lng) * Math.PI) / 180
+  const s1 = Math.sin(dLat / 2)
+  const s2 = Math.sin(dLng / 2)
+  const h = s1 * s1 + Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * s2 * s2
+  return 2 * R * Math.asin(Math.sqrt(h))
+}
+
+/** Rider moves slower during preparation (stuck near restaurant) and faster once on the way.
+ *  durationMinutes: total simulated journey length in minutes from order placement. */
+const PREP_FRACTION = 0.35 // fraction of journey spent in "preparing" stage
+
+/** Returns rider progress 0..1 for an order at elapsed ms since placement. */
+export function progressForOrder(order: DbOrder): number {
+  const elapsedMin = (Date.now() - new Date(order.createdAt).getTime()) / 60000
+  // Total journey time: 8 min for <=2km, up to 15 min for longer orders
+  const dist = order.restaurantLat && order.deliveryLat
+    ? haversine({ lat: order.restaurantLat, lng: order.restaurantLng! }, { lat: order.deliveryLat, lng: order.deliveryLng! })
+    : 3
+  const totalMinutes = Math.min(15, Math.max(8, dist * 2.5))
+  return Math.min(1, elapsedMin / totalMinutes)
+}
+
+/** Map progress + status to the rider position along the route. */
+export function riderPositionFor(order: DbOrder): GeoPoint | null {
+  if (!order.restaurantLat || !order.deliveryLat) return null
+  const from: GeoPoint = { lat: order.restaurantLat, lng: order.restaurantLng! }
+  const to: GeoPoint = { lat: order.deliveryLat, lng: order.deliveryLng! }
+  let t = progressForOrder(order)
+  // During preparation the rider stays within the first 5% of the route
+  if (order.status === "preparing") t = Math.min(t, 0.05)
+  else if (order.status === "delivered") t = 1
+  return { lat: from.lat + (to.lat - from.lat) * t, lng: from.lng + (to.lng - from.lng) * t }
+}
+
+/** Auto-advance order status based on progress (idempotent). */
+export function advanceOrderStatus(order: DbOrder): DbOrder {
+  if (order.status === "delivered" || order.status === "cancelled") return order
+  const t = progressForOrder(order)
+  let next: string | null = null
+  if (t >= 1) next = "delivered"
+  else if (t >= PREP_FRACTION && order.status === "preparing") next = "on-the-way"
+  if (next && next !== order.status) {
+    order.status = next
+    order.statusHistory.push({ status: next, at: Date.now() })
+  }
+  return order
+}
+
+/** Fetch a road route polyline from OSRM (public, keyless) between two points.
+ * Returns null if unavailable (caller should fall back to a straight line). */
+export async function fetchRoutePolyline(from: GeoPoint, to: GeoPoint): Promise<{ geometry: GeoPoint[]; distanceKm: number } | null> {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson`
+    const res = await fetch(url, { signal: AbortSignal.timeout(4000) })
+    if (!res.ok) return null
+    const data = (await res.json()) as any
+    const route = data?.routes?.[0]
+    if (!route) return null
+    return {
+      geometry: route.geometry.coordinates.map((c: number[]) => ({ lat: c[1], lng: c[0] })),
+      distanceKm: (route.distance / 1000),
+    }
+  } catch {
+    return null
+  }
+}
 
 const users: DbUser[] = []
 const addresses: DbAddress[] = []
@@ -126,6 +218,8 @@ const orderItems: DbOrderItem[] = []
 const favorites: DbFavorite[] = []
 
 export const db = {
+  fetchRoutePolyline,
+  advanceOrderStatus,
   getRestaurants: () => restaurants,
   getRestaurantById: (id: string) => restaurants.find((r) => r.id === id),
   searchRestaurants: (q: string) =>
@@ -136,7 +230,7 @@ export const db = {
         r.description.toLowerCase().includes(q),
     ),
   getDishes: () => dishes,
-  getDishesByRestaurant: (restaurantId: string) => dishes.filter((d) => d.restaurant_id === restaurantId || d.restaurantId === restaurantId),
+  getDishesByRestaurant: (restaurantId: string) => dishes.filter((d) => d.restaurantId === restaurantId),
   searchDishes: (q: string) =>
     dishes.filter((d) => d.name.toLowerCase().includes(q) || d.description.toLowerCase().includes(q)),
   getDishById: (id: string) => dishes.find((d) => d.id === id),
@@ -172,6 +266,36 @@ export const db = {
 
   getOrdersByUser: (userId: string) => orders.filter((o) => o.userId === userId).reverse(),
   getOrderById: (id: string) => orders.find((o) => o.id === id),
+  /** Returns live tracking snapshot: rider position, ETA, route, status history. */
+  getOrderTracking: (id: string) => {
+    const order = orders.find((o) => o.id === id)
+    if (!order) return null
+    advanceOrderStatus(order)
+    const pos = riderPositionFor(order)
+    let distanceKm = order.restaurantLat && order.deliveryLat
+      ? haversine({ lat: order.restaurantLat, lng: order.restaurantLng! }, { lat: order.deliveryLat, lng: order.deliveryLng! })
+      : 0
+    const remaining = distanceKm * (1 - progressForOrder(order))
+    const speedKmh = order.status === "on-the-way" ? 30 : 18
+    const etaMinutes = order.status === "delivered" ? 0 : Math.max(1, Math.round((remaining / speedKmh) * 60))
+    return {
+      orderId: order.id,
+      status: order.status,
+      statusHistory: order.statusHistory,
+      restaurant: {
+        name: order.restaurantName,
+        lat: order.restaurantLat,
+        lng: order.restaurantLng,
+        address: order.deliveryAddress,
+      },
+      delivery: { address: order.deliveryAddress, lat: order.deliveryLat, lng: order.deliveryLng },
+      rider: pos,
+      progress: Math.min(1, progressForOrder(order)),
+      distanceKm: Math.round(distanceKm * 10) / 10,
+      etaMinutes,
+      createdAt: order.createdAt,
+    }
+  },
   createOrder: (order: DbOrder, items: Omit<DbOrderItem, "id">[]) => {
     orders.push(order)
     orderItems.push(...items.map((i) => ({ ...i, id: "ITEM" + Date.now() + Math.random() })))

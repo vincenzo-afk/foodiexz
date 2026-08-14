@@ -2,34 +2,28 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+// Real campaigns matching the seeded offers (see lib/seedData.ts).
 const promos = [
   {
     id: 1,
     title: "50% OFF",
-    subtitle: "On your first order",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    code: "FIRST50"
+    subtitle: "On orders above ₹199 — up to ₹100",
+    background: "linear-gradient(135deg, oklch(0.62 0.21 29) 0%, oklch(0.48 0.18 29) 100%)",
+    code: "FOODIE50"
   },
   {
     id: 2,
     title: "Free Delivery",
     subtitle: "On orders above ₹199",
-    background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+    background: "linear-gradient(135deg, oklch(0.72 0.17 50) 0%, oklch(0.55 0.21 29) 100%)",
     code: "FREEDEL"
   },
   {
     id: 3,
     title: "₹100 OFF",
-    subtitle: "Use code FOODIE100",
-    background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-    code: "FOODIE100"
-  },
-  {
-    id: 4,
-    title: "Weekend Special",
-    subtitle: "Extra 30% OFF",
-    background: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
-    code: "WEEKEND30"
+    subtitle: "Welcome offer — orders above ₹299",
+    background: "linear-gradient(135deg, oklch(0.78 0.12 45) 0%, oklch(0.62 0.21 29) 100%)",
+    code: "WELCOME100"
   }
 ];
 

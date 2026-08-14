@@ -18,6 +18,8 @@ function formatRestaurant(r: any) {
     address: r.address,
     openTime: r.openTime,
     closeTime: r.closeTime,
+    lat: r.lat ?? null,
+    lng: r.lng ?? null,
   }
 }
 

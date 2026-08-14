@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ArrowLeft, MapPin, Wallet, CreditCard, Banknote, Plus, Check } from "lucide-react"
 import { api } from "../../lib/api"
+import { demoDeliveryAddress as DEMO_DELIVERY } from "../../lib/seedData"
 import { useStore, type Address } from "../../store/useStore"
 import { Button } from "../ui/button"
 import { Confetti } from "../Confetti"
@@ -29,10 +30,12 @@ export function Checkout() {
   const [couponCode, setCouponCode] = useState("")
   const [discount, setDiscount] = useState(0)
   const [showAddressForm, setShowAddressForm] = useState(false)
-  const [newAddress, setNewAddress] = useState({ type: "Home", address: "", landmark: "" })
+  const [newAddress, setNewAddress] = useState({ type: "Home", address: "", landmark: "", isDefault: false })
   const [couponMessage, setCouponMessage] = useState("")
   const [addressList, setAddressList] = useState<Address[]>([])
   const [showConfetti, setShowConfetti] = useState(false)
+  const [availableOffers, setAvailableOffers] = useState<any[]>([])
+  const [appliedCode, setAppliedCode] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated) navigate("/auth")
@@ -41,6 +44,16 @@ export function Checkout() {
   useEffect(() => {
     if (user?.addresses) setAddressList(user.addresses)
   }, [user])
+
+  // Load offers available for the current cart total so customers can pick one in one tap.
+  useEffect(() => {
+    const total = getCartTotal()
+    if (total > 0) {
+      api.getOffersForTotal(total).then((data) => {
+        if (Array.isArray(data)) setAvailableOffers(data)
+      })
+    }
+  }, [cart, getCartTotal])
 
   const subtotal = getCartTotal()
   const deliveryFee = subtotal >= 199 ? 0 : 25
@@ -66,6 +79,14 @@ export function Checkout() {
     }
   }
 
+  // One-tap selection from offers that already qualify for this cart total.
+  const applyOffer = (offer: { code: string; discountAmount: number; description: string }) => {
+    setCouponCode(offer.code)
+    setDiscount(offer.discountAmount)
+    setCouponMessage(offer.discountAmount > 0 ? `₹${offer.discountAmount} off applied (${offer.description})` : "Coupon applied")
+    setAppliedCode(offer.code)
+  }
+
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       toast.error("Please add a delivery address")
@@ -80,13 +101,18 @@ export function Checkout() {
     try {
       const restaurantId = cart[0].restaurantId
       const restaurantName = cart[0].restaurantName
+      // If no user address is saved, fall back to a demo delivery address so
+      // tracking can still show a live route in this demo environment.
+      const deliveryAddress: Address = selectedAddress
+        ? { ...selectedAddress, lat: selectedAddress.lat ?? DEMO_DELIVERY.lat, lng: selectedAddress.lng ?? DEMO_DELIVERY.lng }
+        : { id: "ADDR-DEMO", type: "Delivery", address: DEMO_DELIVERY.address, lat: DEMO_DELIVERY.lat, lng: DEMO_DELIVERY.lng, isDefault: true }
       const orderId = await placeOrder({
         restaurantId,
         restaurantName,
         items: cart,
         total,
         paymentMethod,
-        deliveryAddress: selectedAddress,
+        deliveryAddress,
         tip: tip || undefined,
       })
       setShowConfetti(true)
@@ -116,7 +142,7 @@ export function Checkout() {
       ]
       return updated
     })
-    setNewAddress({ type: "Home", address: "", landmark: "" })
+    setNewAddress({ type: "Home", address: "", landmark: "", isDefault: false })
     setShowAddressForm(false)
     toast.success("Address added")
   }
@@ -305,12 +331,37 @@ export function Checkout() {
       {/* Coupon */}
       <section className="mb-8">
         <h2 className="font-bold mb-3">Apply Coupon</h2>
+        {availableOffers.length > 0 && (
+          <div className="space-y-2 mb-3">
+            {availableOffers
+              .filter((o) => o.discountAmount > 0)
+              .map((o) => (
+                <button
+                  key={o.code}
+                  onClick={() => applyOffer(o)}
+                  className={`w-full text-left border rounded-lg px-3.5 py-2.5 flex items-center justify-between gap-3 transition-colors ${
+                    appliedCode === o.code
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <span className="flex-1 min-w-0">
+                    <span className="font-bold text-sm">{o.code}</span>
+                    <span className="block text-xs text-muted-foreground mt-0.5 truncate">{o.description}</span>
+                  </span>
+                  <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">
+                    -₹{o.discountAmount}
+                  </span>
+                </button>
+              ))}
+          </div>
+        )}
         <div className="flex gap-2">
           <input
             className="flex-1 border border-border rounded-lg px-3 py-2 text-sm bg-background uppercase"
-            placeholder="Enter coupon code"
+            placeholder="Or enter another coupon code"
             value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value)}
+            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
           />
           <Button variant="outline" onClick={validateCoupon}>
             Apply
@@ -318,9 +369,15 @@ export function Checkout() {
         </div>
         {couponMessage && (
           <p
-            className={`text-sm mt-2 ${discount > 0 ? "text-green-600" : "text-destructive"}`}
+            className={`text-sm mt-2 ${discount > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-destructive"}`}
           >
             {couponMessage}
+          </p>
+        )}
+        {availableOffers.length === 0 && subtotal > 0 && (
+          <p className="text-xs text-muted-foreground mt-2">
+            No offers qualify for this order yet — check the{" "}
+            <a href="/offers" className="text-primary underline">Offers page</a> for upcoming deals.
           </p>
         )}
       </section>
@@ -335,7 +392,7 @@ export function Checkout() {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Delivery Fee</span>
-            <span>{deliveryFee === 0 ? <span className="text-green-600">FREE</span> : `₹${deliveryFee}`}</span>
+            <span>{deliveryFee === 0 ? <span className="text-emerald-600 dark:text-emerald-400">FREE</span> : `₹${deliveryFee}`}</span>
           </div>
           {multiFee > 0 && (
             <div className="flex justify-between">
@@ -348,7 +405,7 @@ export function Checkout() {
             <span>₹{taxes}</span>
           </div>
           {discount > 0 && (
-            <div className="flex justify-between text-green-600">
+            <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
               <span>Coupon discount</span>
               <span>-₹{discount}</span>
             </div>

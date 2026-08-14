@@ -18,6 +18,8 @@ export interface Address {
   type: string
   address: string
   landmark?: string
+  lat?: number
+  lng?: number
   isDefault: boolean
 }
 

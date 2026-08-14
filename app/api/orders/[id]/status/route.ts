@@ -9,6 +9,7 @@ export async function GET(
   const { id } = await params
   const order = db.getOrderById(id)
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 })
+  db.advanceOrderStatus(order)
   return NextResponse.json({ id: order.id, status: order.status, createdAt: order.createdAt })
 }
 
@@ -24,7 +25,12 @@ export async function PUT(
     if (!validStatuses.includes(status)) {
       return NextResponse.json({ error: "Invalid status" }, { status: 400 })
     }
-    db.updateOrder(id, { status })
+    const order = db.getOrderById(id)
+    if (order && !order.statusHistory.some((h) => h.status === status)) {
+      db.updateOrder(id, { status, statusHistory: [...order.statusHistory, { status, at: Date.now() }] })
+    } else if (order) {
+      db.updateOrder(id, { status })
+    }
     return NextResponse.json({ success: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 })

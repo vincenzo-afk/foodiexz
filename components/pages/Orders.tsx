@@ -1,16 +1,16 @@
 "use client"
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { Package, Star } from "lucide-react"
+import { Package, Star, Timer } from "lucide-react"
 import { api } from "../../lib/api"
 import { useStore } from "../../store/useStore"
 import { Button } from "../ui/button"
 import { toast } from "sonner"
 
 const statusColors: Record<string, string> = {
-  preparing: "bg-amber-100 text-amber-700",
-  "on-the-way": "bg-blue-100 text-blue-700",
-  delivered: "bg-green-100 text-green-700",
+  preparing: "bg-secondary text-secondary-foreground",
+  "on-the-way": "bg-primary/10 text-primary",
+  delivered: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
   cancelled: "bg-destructive/10 text-destructive",
 }
 
@@ -113,9 +113,14 @@ export function Orders() {
                 <span className="font-bold">Total: ₹{order.total}</span>
                 <div className="flex items-center gap-2">
                   {order.status === "preparing" || order.status === "on-the-way" ? (
-                    <Button variant="outline" size="sm" asChild>
-                      <Link to={`/order/${order.id}`}>Track</Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <span className="hidden sm:inline-flex items-center gap-1 text-xs text-muted-foreground">
+                        <Timer className="w-3.5 h-3.5 text-primary" /> {order.etaMinutes ?? 5} min
+                      </span>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/order/${order.id}`}>Track</Link>
+                      </Button>
+                    </div>
                   ) : (
                     <Button variant="outline" size="sm" asChild>
                       <Link to={`/order/${order.id}`}>View</Link>

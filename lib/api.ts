@@ -70,6 +70,33 @@ export const api = {
     }
   },
 
+  searchDishesByQuery: async (query: string) => {
+    try {
+      return await apiFetch(`/dishes/search?q=${encodeURIComponent(query)}`)
+    } catch (err) {
+      return []
+    }
+  },
+
+  getOffersForTotal: async (orderTotal: number) => {
+    try {
+      return await apiFetch(`/offers?total=${orderTotal}`)
+    } catch (err) {
+      return []
+    }
+  },
+
+  sendContact: async (data: { name: string; email: string; message: string }) => {
+    try {
+      return await apiFetch("/contact", {
+        method: "POST",
+        body: JSON.stringify(data),
+      })
+    } catch (err) {
+      throw err
+    }
+  },
+
   // Dishes
   getDishesByRestaurant: async (restaurantId: string) => {
     try {
@@ -182,6 +209,14 @@ export const api = {
     }
   },
 
+  getOrderTracking: async (id: string) => {
+    try {
+      return await apiFetch(`/orders/${id}/tracking`)
+    } catch (err) {
+      return null
+    }
+  },
+
   submitReview: async (orderId: string, rating: number, comment: string) => {
     try {
       return await apiFetch(`/orders/${orderId}/review`, {
@@ -225,6 +260,25 @@ export const api = {
   },
 
   // Addresses
+  getAddresses: async () => {
+    try {
+      return await apiFetch("/addresses")
+    } catch (err) {
+      return []
+    }
+  },
+
+  createAddress: async (address: any) => {
+    try {
+      return await apiFetch("/addresses", {
+        method: "POST",
+        body: JSON.stringify(address),
+      })
+    } catch (err) {
+      throw err
+    }
+  },
+
   addAddress: async (address: any) => {
     try {
       return await apiFetch("/addresses", {

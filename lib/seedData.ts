@@ -14,6 +14,8 @@ export const restaurants = [
     totalRatings: "10K+",
     description: "Authentic North Indian cuisine with rich flavors and aromatic spices",
     address: "123 MG Road, Sector 15, New Delhi",
+    lat: 28.6330,
+    lng: 77.2041,
     openTime: "11:00 AM",
     closeTime: "11:00 PM"
   },
@@ -31,6 +33,8 @@ export const restaurants = [
     totalRatings: "8.5K+",
     description: "Pan-Asian delights with authentic flavors from across Asia",
     address: "456 Park Street, Connaught Place, Delhi",
+    lat: 28.6315,
+    lng: 77.2167,
     openTime: "12:00 PM",
     closeTime: "11:30 PM"
   },
@@ -48,6 +52,8 @@ export const restaurants = [
     totalRatings: "12K+",
     description: "Italian classics made with love and authentic ingredients",
     address: "789 Khan Market, New Delhi",
+    lat: 28.6006,
+    lng: 77.2295,
     openTime: "11:30 AM",
     closeTime: "12:00 AM"
   },
@@ -65,6 +71,8 @@ export const restaurants = [
     totalRatings: "6K+",
     description: "Spicy and flavorful Mexican street food",
     address: "321 Hauz Khas Village, Delhi",
+    lat: 28.5494,
+    lng: 77.2001,
     openTime: "12:00 PM",
     closeTime: "11:00 PM"
   },
@@ -82,6 +90,8 @@ export const restaurants = [
     totalRatings: "15K+",
     description: "Juicy burgers and crispy fries for the ultimate comfort meal",
     address: "567 Cyber Hub, Gurgaon",
+    lat: 28.4949,
+    lng: 77.0893,
     openTime: "10:00 AM",
     closeTime: "12:00 AM"
   },
@@ -99,10 +109,18 @@ export const restaurants = [
     totalRatings: "5K+",
     description: "Fresh and authentic Japanese sushi experience",
     address: "890 Select City Walk, Saket",
+    lat: 28.5283,
+    lng: 77.2196,
     openTime: "12:30 PM",
     closeTime: "11:00 PM"
   }
 ];
+
+export const demoDeliveryAddress = {
+  address: "Block 42, Connaught Place, New Delhi",
+  lat: 28.6304,
+  lng: 77.2177,
+};
 
 export const dishes = [
   // Spice Junction dishes
@@ -334,7 +352,8 @@ export const offers = [
     minOrder: 199,
     maxDiscount: 100,
     discountPercent: 50,
-    validTill: "2025-12-31"
+    validTill: "2025-12-31",
+    type: "percent"
   },
   {
     id: "o2",
@@ -343,7 +362,8 @@ export const offers = [
     minOrder: 299,
     maxDiscount: 100,
     discountPercent: null,
-    validTill: "2025-12-31"
+    validTill: "2025-12-31",
+    type: "flat"
   },
   {
     id: "o3",
@@ -352,6 +372,7 @@ export const offers = [
     minOrder: 199,
     maxDiscount: 50,
     discountPercent: null,
-    validTill: "2025-12-31"
+    validTill: "2025-12-31",
+    type: "free-delivery"
   }
 ];
