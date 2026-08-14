@@ -27,6 +27,7 @@ export function Checkout() {
   const [loading, setLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState("cod")
   const [tip, setTip] = useState(0)
+  const [deliveryNote, setDeliveryNote] = useState("")
   const [couponCode, setCouponCode] = useState("")
   const [discount, setDiscount] = useState(0)
   const [showAddressForm, setShowAddressForm] = useState(false)
@@ -114,6 +115,7 @@ export function Checkout() {
         paymentMethod,
         deliveryAddress,
         tip: tip || undefined,
+        deliveryNote: deliveryNote.trim() || undefined,
       })
       setShowConfetti(true)
       setTimeout(() => {
@@ -211,7 +213,7 @@ export function Checkout() {
                 onClick={() => setShowAddressForm(true)}
                 className="text-primary underline"
               >
-                Add one
+                Add delivery address
               </button>
             </p>
           )}
@@ -306,6 +308,18 @@ export function Checkout() {
             Wallet balance: ₹{user?.wallet ?? 0}
           </p>
         )}
+      </section>
+
+      {/* Delivery instructions */}
+      <section className="mb-8">
+        <h2 className="font-bold mb-3">Delivery instructions</h2>
+        <textarea
+          className="w-full border border-border rounded-xl px-3 py-2.5 text-sm bg-background resize-none"
+          placeholder="E.g. ring the doorbell twice, leave at the door, call before arriving"
+          rows={2}
+          value={deliveryNote}
+          onChange={(e) => setDeliveryNote(e.target.value)}
+        />
       </section>
 
       {/* Tip */}

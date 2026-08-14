@@ -1,10 +1,11 @@
 "use client"
 import { useEffect, useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Search, MapPin, Sparkles } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
+import { Search, MapPin, Sparkles, History, Clock } from "lucide-react"
 import { api } from "../../lib/api"
 import { useStore } from "../../store/useStore"
-import { RestaurantCard } from "../RestaurantCard"
+import { RestaurantCard, getPopularDishes } from "../RestaurantCard"
+import { dishes as allDishes } from "../../lib/seedData"
 import { PromoCarousel } from "../PromoCarousel"
 import { FilterPanel } from "../FilterPanel"
 
@@ -32,7 +33,7 @@ const sortOptions: { key: SortKey; label: string }[] = [
 
 export function Home() {
   const navigate = useNavigate()
-  const { filters, setFilters, searchQuery, setSearchQuery } = useStore()
+  const { filters, setFilters, searchQuery, setSearchQuery, recentlyViewed, clearRecentlyViewed } = useStore()
   const [restaurants, setRestaurants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [sortKey, setSortKey] = useState<SortKey>("recommended")
@@ -147,6 +148,53 @@ export function Home() {
       </section>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+        {/* Recently viewed strip — re-jump to restaurants you checked out */}
+        {recentlyViewed.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-semibold">Recently Viewed</h2>
+              </div>
+              <button
+                onClick={() => clearRecentlyViewed()}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
+              {recentlyViewed
+                .map((rid) => restaurants.find((r) => r.id === rid))
+                .filter(Boolean)
+                .map((r: any) => (
+                  <Link
+                    key={r.id}
+                    to={`/restaurant/${r.id}`}
+                    className="flex-shrink-0 w-48 bg-card border border-border rounded-xl overflow-hidden hover:border-primary/40 transition-colors group"
+                  >
+                    <div className="relative h-24 overflow-hidden bg-muted">
+                      <img
+                        src={r.image || "/placeholder.svg"}
+                        alt={r.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    </div>
+                    <div className="p-3">
+                      <p className="font-medium text-sm line-clamp-1 group-hover:text-primary transition-colors">
+                        {r.name}
+                      </p>
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                        <Clock className="w-3 h-3" />
+                        {r.deliveryTime}
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+            </div>
+          </section>
+        )}
+
         {/* Promo Carousel */}
         <section className="mb-10">
           <div className="flex items-center gap-2 mb-4">
@@ -225,8 +273,14 @@ export function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filtered.map((r) => (
-                <RestaurantCard key={r.id} restaurant={r} />
+              {filtered.map((r: any) => (
+                <RestaurantCard
+                  key={r.id}
+                  restaurant={{
+                    ...r,
+                    popularDishes: getPopularDishes(allDishes, r.id),
+                  }}
+                />
               ))}
             </div>
           )}

@@ -44,7 +44,7 @@ export function Cart() {
           </Link>
           Cart
           <span className="text-sm font-normal text-muted-foreground">
-            ({cart.reduce((s, i) => s + i.quantity, 0)} items)
+            ({cart.reduce((s, i) => s + i.quantity, 0)} {cart.reduce((s, i) => s + i.quantity, 0) === 1 ? 'item' : 'items'})
           </span>
         </h1>
         <button

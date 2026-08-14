@@ -1,4 +1,5 @@
 "use client"
+import { useEffect } from "react"
 import { Link } from "react-router-dom"
 import {
   User,
@@ -15,7 +16,11 @@ import { useStore } from "../../store/useStore"
 import { Button } from "../ui/button"
 
 export function Profile() {
-  const { user, isAuthenticated, logout, favorites, orders } = useStore()
+  const { user, isAuthenticated, logout, favorites, orders, syncWallet } = useStore()
+
+  useEffect(() => {
+    void syncWallet()
+  }, [isAuthenticated])
 
   if (!isAuthenticated || !user) {
     return (

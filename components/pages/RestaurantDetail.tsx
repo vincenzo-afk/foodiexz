@@ -10,7 +10,7 @@ import { toast } from "sonner"
 
 export function RestaurantDetail() {
   const { id } = useParams<{ id: string }>()
-  const { favorites, toggleFavorite, isAuthenticated, cart, getCartTotal } = useStore()
+  const { favorites, toggleFavorite, isAuthenticated, cart, getCartTotal, addToRecentlyViewed } = useStore()
   const [restaurant, setRestaurant] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState<string>("All")
@@ -19,6 +19,7 @@ export function RestaurantDetail() {
 
   useEffect(() => {
     if (id) {
+      addToRecentlyViewed(id)
       api.getRestaurantById(id).then((data) => {
         setRestaurant(data)
         setLoading(false)
@@ -131,8 +132,9 @@ export function RestaurantDetail() {
       {/* Offer */}
       {restaurant.offer && (
         <div className="max-w-4xl mx-auto px-4 mb-6">
-          <div className="border border-dashed border-primary/50 rounded-lg px-4 py-3 flex items-center gap-2 text-sm">
+          <div className="bg-card border border-border rounded-xl px-4 py-3 flex items-center gap-2 text-sm shadow-sm">
             <span className="text-primary font-bold">{restaurant.offer}</span>
+            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">{restaurant.offerCode ? `Use code ${restaurant.offerCode}` : 'Limited offer'}</span>
           </div>
         </div>
       )}
@@ -181,8 +183,8 @@ export function RestaurantDetail() {
               className="w-4 h-4 accent-primary"
             />
             <span className="flex items-center gap-1.5 text-sm">
-              <span className="w-3.5 h-3.5 border-2 border-green-700 rounded-[3px] flex items-center justify-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-700" />
+              <span className="w-3.5 h-3.5 border-2 border-emerald-700 rounded-[3px] flex items-center justify-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-700" />
               </span>
               Veg only
             </span>

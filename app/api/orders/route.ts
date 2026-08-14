@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server"
 import { db } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
 import { haversine } from "@/lib/db"
+import { deductWallet } from "@/app/api/wallet/route"
 
 export async function POST(req: Request) {
   const auth = await requireAuth(req as any)
@@ -9,7 +10,17 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { restaurantId, restaurantName, total, paymentMethod, deliveryAddress, items } = body
+    const { restaurantId, restaurantName, total, paymentMethod, deliveryAddress, items, tip, deliveryNote } = body
+    if (paymentMethod === "wallet") {
+      const user = db.getUserById(auth.userId)
+      if (!user || user.wallet < total) {
+        return NextResponse.json(
+          { error: "Insufficient wallet balance. Please top up or choose another payment method." },
+          { status: 402 },
+        )
+      }
+      deductWallet(user.id, total, `Order payment: ${restaurantName}`)
+    }
     const orderId = "ORD" + Date.now()
     const restaurant = db.getRestaurantById(restaurantId)
     const addr = deliveryAddress || {}
@@ -29,6 +40,8 @@ export async function POST(req: Request) {
         status: "preparing",
         statusHistory: [{ status: "preparing", at: Date.now() }],
         createdAt: new Date().toISOString(),
+        tip: tip ? Number(tip) : 0,
+        deliveryNote: deliveryNote || null,
       },
       (items || []).map((item: any) => ({
         orderId,

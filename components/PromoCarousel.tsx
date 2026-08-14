@@ -55,7 +55,7 @@ export function PromoCarousel() {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -100 }}
           transition={{ duration: 0.5 }}
-          className="absolute inset-0 p-8 text-white flex flex-col justify-center"
+          className="absolute inset-0 px-16 text-white flex flex-col justify-center"
           style={{ background: promos[currentIndex].background }}
         >
           <motion.h2
@@ -101,7 +101,7 @@ export function PromoCarousel() {
         <ChevronRight className="w-6 h-6 text-white" />
       </button>
       
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+      <div className="absolute bottom-5 left-0 right-0 flex justify-center gap-2 z-10">
         {promos.map((_, index) => (
           <button
             key={index}

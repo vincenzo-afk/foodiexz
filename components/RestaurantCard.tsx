@@ -22,6 +22,16 @@ interface Restaurant {
   offer?: string
   isOpen: boolean
   totalRatings: string
+  popularDishes?: string[]
+}
+
+/** Compute a small "popular dishes" snippet from dish ratings when available. */
+export function getPopularDishes(dishes: { name: string; rating: number; restaurantId: string }[], restaurantId: string): string[] {
+  return dishes
+    .filter((d) => d.restaurantId === restaurantId)
+    .sort((a, b) => b.rating - a.rating)
+    .slice(0, 2)
+    .map((d) => d.name)
 }
 
 interface RestaurantCardProps {
@@ -65,6 +75,18 @@ export function RestaurantCard({ restaurant }: RestaurantCardProps) {
             </div>
           )}
 
+          <div className={`absolute left-3 ${restaurant.rating >= 4.7 ? "top-11" : "top-3"}`}>
+            <Badge
+              className={
+                restaurant.isOpen
+                  ? "bg-emerald-600 hover:bg-emerald-600"
+                  : "bg-destructive hover:bg-destructive"
+              }
+            >
+              {restaurant.isOpen ? "Open now" : "Closed"}
+            </Badge>
+          </div>
+
           {restaurant.offer && restaurant.isOpen && (
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
               <p className="text-white font-semibold text-sm flex items-center gap-1">
@@ -99,6 +121,11 @@ export function RestaurantCard({ restaurant }: RestaurantCardProps) {
               {restaurant.name}
             </h3>
             <p className="text-sm text-muted-foreground line-clamp-1">{restaurant.cuisine.join(" • ")}</p>
+            {restaurant.popularDishes && restaurant.popularDishes.length > 0 && (
+              <p className="text-xs text-muted-foreground/80 line-clamp-1 mt-1">
+                Popular: {restaurant.popularDishes.join(", ")}
+              </p>
+            )}
           </div>
 
           <div className="flex items-center justify-between text-sm mb-3 gap-2">

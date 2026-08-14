@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { Package, Star, Timer, RotateCcw, Ban } from "lucide-react"
+import { Package, Star, Timer, RotateCcw, Ban, Search, Copy, Check } from "lucide-react"
 import { StarRating } from "../StarRating"
 import { api } from "../../lib/api"
 import { useStore } from "../../store/useStore"
@@ -15,6 +15,14 @@ const statusColors: Record<string, string> = {
   cancelled: "bg-destructive/10 text-destructive",
 }
 
+const statusTabs = [
+  { key: "all", label: "All" },
+  { key: "preparing", label: "Preparing" },
+  { key: "on-the-way", label: "On the way" },
+  { key: "delivered", label: "Delivered" },
+  { key: "cancelled", label: "Cancelled" },
+]
+
 export function Orders() {
   const navigate = useNavigate()
   const { isAuthenticated, user, addToCart, clearCart } = useStore()
@@ -23,6 +31,8 @@ export function Orders() {
   const [ratingFor, setRatingFor] = useState<string | null>(null)
   const [rating, setRating] = useState(5)
   const [review, setReview] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
+  const [search, setSearch] = useState("")
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -109,6 +119,34 @@ export function Orders() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">My Orders</h1>
 
+      <div className="flex items-center gap-2 mb-4">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by restaurant or order ID"
+            className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary"
+          />
+        </div>
+      </div>
+
+      <div className="flex gap-2 mb-6 overflow-x-auto pb-1 scrollbar-none">
+        {statusTabs.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setStatusFilter(key)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap border transition-colors ${
+              statusFilter === key
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-background border-border text-muted-foreground hover:border-primary/50"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {orders.length === 0 ? (
         <div className="text-center py-16">
           <Package className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
@@ -118,8 +156,31 @@ export function Orders() {
           </Button>
         </div>
       ) : (
+        <>
+          {orders.filter(
+            (order) =>
+              (statusFilter === "all" || order.status === statusFilter) &&
+              (!search ||
+                order.restaurantName.toLowerCase().includes(search.toLowerCase()) ||
+                order.id.toLowerCase().includes(search.toLowerCase())),
+          ).length === 0 && (
+            <div className="text-center py-12">
+              <Package className="w-10 h-10 mx-auto mb-3 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground text-sm">
+                No orders match your filters. Try a different search or status.
+              </p>
+            </div>
+          )}
         <div className="space-y-4">
-          {orders.map((order) => (
+          {orders
+            .filter(
+              (order) =>
+                (statusFilter === "all" || order.status === statusFilter) &&
+                (!search ||
+                  order.restaurantName.toLowerCase().includes(search.toLowerCase()) ||
+                  order.id.toLowerCase().includes(search.toLowerCase())),
+            )
+            .map((order) => (
             <div key={order.id} className="bg-card border border-border rounded-xl p-5">
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -235,6 +296,7 @@ export function Orders() {
             </div>
           ))}
         </div>
+      </>
       )}
     </div>
   )

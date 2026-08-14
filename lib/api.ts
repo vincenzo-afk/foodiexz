@@ -273,6 +273,26 @@ export const api = {
     }
   },
 
+  // Wallet
+  getWallet: async () => {
+    try {
+      return await apiFetch("/wallet")
+    } catch (err) {
+      return null
+    }
+  },
+
+  topUpWallet: async (amount: number) => {
+    try {
+      return await apiFetch("/wallet", {
+        method: "POST",
+        body: JSON.stringify({ amount }),
+      })
+    } catch (err) {
+      throw err
+    }
+  },
+
   // Addresses
   getAddresses: async () => {
     try {

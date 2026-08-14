@@ -78,6 +78,8 @@ export interface DbOrder {
   review?: string
   createdAt: string
   deliveryFee?: number
+  tip?: number
+  deliveryNote?: string | null
 }
 
 export interface DbOrderItem {
@@ -240,6 +242,10 @@ export const db = {
 
   getUserByEmail: (email: string) => users.find((u) => u.email === email),
   getUserById: (id: string) => users.find((u) => u.id === id),
+  updateUserWallet: (id: string, wallet: number) => {
+    const u = users.find((u) => u.id === id)
+    if (u) u.wallet = Math.max(0, wallet)
+  },
   createUser: (user: DbUser) => {
     users.push(user)
     return user

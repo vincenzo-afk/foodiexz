@@ -1,15 +1,18 @@
 "use client"
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { ArrowLeft, Leaf, Shield, Bell, KeyRound } from "lucide-react"
+import { ArrowLeft, Leaf, Shield, Bell, KeyRound, Wallet } from "lucide-react"
+import api from "../../lib/api"
 import { useStore } from "../../store/useStore"
 import { Button } from "../ui/button"
 import { toast } from "sonner"
 
 export function Settings() {
-  const { user, isAuthenticated, updateProfile, setDietaryPreference } = useStore()
+  const { user, isAuthenticated, updateProfile, setDietaryPreference, syncWallet } = useStore()
   const [dietary, setDietary] = useState<"all" | "veg" | "non-veg">("all")
   const [notifications, setNotifications] = useState(true)
+  const [customAmount, setCustomAmount] = useState("")
+  const [toppingUp, setToppingUp] = useState(false)
 
   useEffect(() => {
     if (user?.dietaryPreference) setDietary(user.dietaryPreference)
@@ -32,6 +35,27 @@ export function Settings() {
     setDietary(value)
     setDietaryPreference(value)
     toast.success(`Dietary preference set to ${value}`)
+  }
+
+  const handleTopUp = async (amount: number) => {
+    if (!user || toppingUp) return
+    if (!Number.isFinite(amount) || amount <= 0 || amount > 100000) {
+      toast.error("Please enter a valid top-up amount (max ₹1,00,000)")
+      return
+    }
+    setToppingUp(true)
+    try {
+      const res = await api.topUpWallet(Math.round(amount))
+      const newBalance = (res as any)?.wallet ?? (res as any)?.balance ?? user.wallet
+      updateProfile({ wallet: newBalance })
+      toast.success(`₹${amount} added to your wallet`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Top-up failed")
+    } finally {
+      setToppingUp(false)
+      void syncWallet()
+      setCustomAmount("")
+    }
   }
 
   return (
@@ -141,6 +165,51 @@ export function Settings() {
               <p className="text-muted-foreground text-xs mb-1">Wallet</p>
               <p className="font-medium">₹{user.wallet}</p>
             </div>
+          </div>
+        </section>
+
+        {/* Wallet */}
+        <section className="bg-card border border-border rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Wallet className="w-5 h-5 text-primary" />
+            <h2 className="font-bold">FoodiezX Wallet</h2>
+          </div>
+          <div className="flex items-center justify-between bg-muted rounded-lg px-4 py-3 mb-4">
+            <span className="text-sm text-muted-foreground">Current balance</span>
+            <span className="text-xl font-bold text-primary">₹{user.wallet}</span>
+          </div>
+          <p className="text-sm text-muted-foreground mb-3">
+            Top up your wallet and pay instantly at checkout with zero payment fees.
+          </p>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {[100, 200, 500].map((amt) => (
+              <button
+                key={amt}
+                disabled={toppingUp}
+                onClick={() => void handleTopUp(amt)}
+                className="px-5 py-2 rounded-full text-sm font-semibold border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50"
+              >
+                + ₹{amt}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="number"
+              min={10}
+              max={100000}
+              value={customAmount}
+              disabled={toppingUp}
+              onChange={(e) => setCustomAmount(e.target.value)}
+              placeholder="Other amount"
+              className="flex-1 px-4 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary disabled:opacity-50"
+            />
+            <Button
+              disabled={toppingUp || !customAmount}
+              onClick={() => void handleTopUp(Number(customAmount))}
+            >
+              {toppingUp ? "Adding…" : "Add money"}
+            </Button>
           </div>
         </section>
       </div>

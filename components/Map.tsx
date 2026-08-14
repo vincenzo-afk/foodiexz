@@ -92,9 +92,11 @@ export function Map({ data }: MapProps) {
         .addTo(map)
     }
 
-    // Delivery endpoint
+    // Delivery endpoint (missing coordinates fall back to a central demo point)
+    const deliveryLat = data.delivery?.lat ?? 28.6139
+    const deliveryLng = data.delivery?.lng ?? 77.209
     if (data.delivery) {
-      const d = L.latLng(data.delivery.lat, data.delivery.lng)
+      const d = L.latLng(deliveryLat, deliveryLng)
       bounds.extend(d)
       L.marker(d, { icon: deliveryIcon })
         .bindPopup(`<b>Delivery</b><br/>${data.delivery.address}`)
@@ -108,7 +110,7 @@ export function Map({ data }: MapProps) {
         : data.restaurant && data.delivery
           ? [
               { lat: data.restaurant.lat, lng: data.restaurant.lng },
-              { lat: data.delivery.lat, lng: data.delivery.lng },
+              { lat: deliveryLat, lng: deliveryLng },
             ]
           : null
 

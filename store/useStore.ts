@@ -67,6 +67,7 @@ export interface Order {
   deliveryAddress: Address
   paymentMethod: string
   tip?: number
+  deliveryNote?: string | null
   rating?: number
   review?: string
 }
@@ -80,6 +81,7 @@ interface AppState {
   logout: () => void
   updateProfile: (data: Partial<User>) => void
   setDietaryPreference: (preference: "all" | "veg" | "non-veg") => void
+  syncWallet: () => Promise<void>
 
   // Cart
   cart: CartItem[]
@@ -96,6 +98,11 @@ interface AppState {
   toggleFavorite: (restaurantId: string) => void
   isFavorite: (restaurantId: string) => boolean
   setFavorites: (favorites?: string[]) => void
+
+  // Recently viewed restaurants (last 5 visited detail pages)
+  recentlyViewed: string[]
+  addToRecentlyViewed: (restaurantId: string) => void
+  clearRecentlyViewed: () => void
 
   // Orders
   orders: Order[]
@@ -243,6 +250,19 @@ export const useStore = create<AppState>()(
         get().updateProfile({ dietaryPreference: preference })
       },
 
+      // Sync wallet balance from the server wallet (authoritative source)
+      syncWallet: async () => {
+        if (!get().isAuthenticated || !get().user) return
+        try {
+          const wallet = await api.getWallet()
+          if (wallet && typeof wallet.balance === "number" && get().user) {
+            get().updateProfile({ wallet: wallet.balance })
+          }
+        } catch {
+          // leave local balance unchanged on failure
+        }
+      },
+
       // Cart initial state
       cart: [],
 
@@ -335,6 +355,19 @@ export const useStore = create<AppState>()(
       // Helper method to check if restaurant is favorite
       isFavorite: (restaurantId: string) => {
         return get().favorites.includes(restaurantId)
+      },
+
+      // Recently viewed initial state
+      recentlyViewed: [],
+
+      // Recently viewed actions: keep the last 5 distinct restaurant ids, newest first
+      addToRecentlyViewed: (restaurantId: string) => {
+        const recent = get().recentlyViewed.filter((id) => id !== restaurantId)
+        set({ recentlyViewed: [restaurantId, ...recent].slice(0, 5) })
+      },
+
+      clearRecentlyViewed: () => {
+        set({ recentlyViewed: [] })
       },
 
       // Method to set favorites from API
@@ -575,6 +608,7 @@ export const useStore = create<AppState>()(
         orders: state.orders,
         reviews: state.reviews,
         notifications: state.notifications,
+        recentlyViewed: state.recentlyViewed,
       }),
     },
   ),

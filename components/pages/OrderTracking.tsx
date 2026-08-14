@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import dynamic from "next/dynamic"
-import { CheckCircle2, Circle, Timer, Bike, Home, ArrowLeft, Navigation, MapPin } from "lucide-react"
+import { CheckCircle2, Circle, Timer, Bike, Home, ArrowLeft, Navigation, MapPin, Copy } from "lucide-react"
+import { toast } from "sonner"
 import { api } from "../../lib/api"
 import { Button } from "../ui/button"
 import { Confetti } from "../Confetti"
@@ -114,6 +115,15 @@ export function OrderTracking() {
   const currentIdx = steps.findIndex((s) => s.key === tracking.status)
   const isCancelled = tracking.status === "cancelled"
 
+  const copyOrderId = async () => {
+    try {
+      await navigator.clipboard.writeText(tracking.orderId)
+      toast.success("Order ID copied to clipboard")
+    } catch {
+      toast.error("Could not copy — please copy it manually")
+    }
+  }
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       {showConfetti && <Confetti />}
@@ -123,7 +133,16 @@ export function OrderTracking() {
         </Link>
         Order Tracking
       </h1>
-      <p className="text-sm text-muted-foreground mb-6">Order #{tracking.orderId}</p>
+      <p className="text-sm text-muted-foreground mb-6 flex items-center gap-2">
+        Order #{tracking.orderId}
+        <button
+          onClick={copyOrderId}
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-border bg-card text-xs font-medium text-muted-foreground hover:text-primary hover:border-primary/50 transition-colors"
+          aria-label="Copy order ID"
+        >
+          <Copy className="w-3 h-3" /> Copy
+        </button>
+      </p>
 
       {isCancelled ? (
         <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-8 text-center">
