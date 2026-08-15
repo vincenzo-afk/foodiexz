@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
 import { haversine } from "@/lib/db"
 import { deductWallet } from "@/app/api/wallet/route"
+import { createOrderSchema, validationError } from "@/lib/validation"
 
 export async function POST(req: Request) {
   const auth = await requireAuth(req as any)
@@ -10,48 +11,75 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json()
-    const { restaurantId, restaurantName, total, paymentMethod, deliveryAddress, items, tip, deliveryNote } = body
+    const parsed = createOrderSchema.safeParse({
+      ...body,
+      idempotencyKey: req.headers.get("Idempotency-Key") || body?.idempotencyKey,
+    })
+    if (!parsed.success) {
+      return NextResponse.json({ error: validationError(parsed.error) }, { status: 400 })
+    }
+
+    const { restaurantId, restaurantName, total, paymentMethod, deliveryAddress, items, tip, deliveryNote, idempotencyKey } = parsed.data
+    const restaurant = db.getRestaurantById(restaurantId)
+    if (!restaurant) return NextResponse.json({ error: "Restaurant not found" }, { status: 404 })
+
+    if (idempotencyKey) {
+      const existingOrder = db.getOrderByIdempotencyKey(auth.userId, idempotencyKey)
+      if (existingOrder) return NextResponse.json({ orderId: existingOrder.id, duplicate: true })
+    }
+
+    const persistedItems = items.map((item) => {
+      const dish = db.getDishById(item.dishId)
+      if (!dish || dish.restaurantId !== restaurantId) {
+        throw new Error(`Dish ${item.dishId} is not available from this restaurant`)
+      }
+      return {
+        orderId: "",
+        dishId: dish.id,
+        name: dish.name,
+        price: dish.price,
+        quantity: item.quantity,
+        isVeg: dish.isVeg,
+        image: dish.image,
+      }
+    })
+
+    const user = db.getUserById(auth.userId)
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
     if (paymentMethod === "wallet") {
-      const user = db.getUserById(auth.userId)
-      if (!user || user.wallet < total) {
+      const debited = deductWallet(user.id, total, `Order payment: ${restaurantName}`)
+      if (!debited.success) {
         return NextResponse.json(
           { error: "Insufficient wallet balance. Please top up or choose another payment method." },
           { status: 402 },
         )
       }
-      deductWallet(user.id, total, `Order payment: ${restaurantName}`)
     }
-    const orderId = "ORD" + Date.now()
-    const restaurant = db.getRestaurantById(restaurantId)
-    const addr = deliveryAddress || {}
+
+    const orderId = "ORD" + Date.now() + Math.random().toString(36).slice(2, 7)
+    const addr = deliveryAddress
+    const now = Date.now()
     db.createOrder(
       {
         id: orderId,
         userId: auth.userId,
         restaurantId,
-        restaurantName,
+        restaurantName: restaurant.name,
         total,
         paymentMethod,
         deliveryAddress: JSON.stringify(addr),
-        deliveryLat: addr.lat || undefined,
-        deliveryLng: addr.lng || undefined,
-        restaurantLat: restaurant?.lat,
-        restaurantLng: restaurant?.lng,
+        deliveryLat: addr.lat ?? undefined,
+        deliveryLng: addr.lng ?? undefined,
+        restaurantLat: restaurant.lat,
+        restaurantLng: restaurant.lng,
         status: "preparing",
-        statusHistory: [{ status: "preparing", at: Date.now() }],
-        createdAt: new Date().toISOString(),
-        tip: tip ? Number(tip) : 0,
+        statusHistory: [{ status: "preparing", at: now }],
+        createdAt: new Date(now).toISOString(),
+        tip,
         deliveryNote: deliveryNote || null,
+        idempotencyKey,
       },
-      (items || []).map((item: any) => ({
-        orderId,
-        dishId: item.dishId,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        isVeg: item.isVeg,
-        image: item.image,
-      })),
+      persistedItems.map((item) => ({ ...item, orderId })),
     )
     return NextResponse.json({ orderId })
   } catch (err: any) {

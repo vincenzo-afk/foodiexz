@@ -80,6 +80,7 @@ export interface DbOrder {
   deliveryFee?: number
   tip?: number
   deliveryNote?: string | null
+  idempotencyKey?: string
 }
 
 export interface DbOrderItem {
@@ -167,7 +168,7 @@ export function progressForOrder(order: DbOrder): number {
     ? haversine({ lat: order.restaurantLat, lng: order.restaurantLng! }, { lat: order.deliveryLat, lng: order.deliveryLng! })
     : 3
   const totalMinutes = Math.min(15, Math.max(8, dist * 2.5))
-  return Math.min(1, elapsedMin / totalMinutes)
+  return Math.max(0, Math.min(1, elapsedMin / totalMinutes))
 }
 
 /** Map progress + status to the rider position along the route. */
@@ -274,6 +275,8 @@ export const db = {
 
   getOrdersByUser: (userId: string) => orders.filter((o) => o.userId === userId).reverse(),
   getOrderById: (id: string) => orders.find((o) => o.id === id),
+  getOrderByIdempotencyKey: (userId: string, idempotencyKey: string) =>
+    orders.find((o) => o.userId === userId && o.idempotencyKey === idempotencyKey),
   /** Returns live tracking snapshot: rider position, ETA, route, status history. */
   getOrderTracking: (id: string) => {
     const order = orders.find((o) => o.id === id)
@@ -283,7 +286,7 @@ export const db = {
     let distanceKm = order.restaurantLat && order.deliveryLat
       ? haversine({ lat: order.restaurantLat, lng: order.restaurantLng! }, { lat: order.deliveryLat, lng: order.deliveryLng! })
       : 0
-    const remaining = distanceKm * (1 - progressForOrder(order))
+    const remaining = Math.max(0, distanceKm * (1 - progressForOrder(order)))
     const speedKmh = order.status === "on-the-way" ? 30 : 18
     const etaMinutes = order.status === "delivered" ? 0 : Math.max(1, Math.round((remaining / speedKmh) * 60))
     return {

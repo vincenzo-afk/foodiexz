@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { db } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
+import { validationError, walletTopUpSchema } from "@/lib/validation"
 
 export interface DbWalletTx {
   id: string
@@ -19,11 +20,11 @@ export async function POST(req: NextRequest) {
   if (auth instanceof NextResponse) return auth
 
   try {
-    const body = await req.json()
-    const amount = Number(body.amount)
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return NextResponse.json({ error: "Invalid amount" }, { status: 400 })
+    const parsed = walletTopUpSchema.safeParse(await req.json())
+    if (!parsed.success) {
+      return NextResponse.json({ error: validationError(parsed.error) }, { status: 400 })
     }
+    const { amount, reason } = parsed.data
     const capped = Math.min(amount, 10000)
     const user = db.getUserById(auth.userId)
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
       userId: user.id,
       amount: capped,
       type: "credit",
-      reason: body.reason || "Wallet top-up",
+      reason: reason || "Wallet top-up",
       at: Date.now(),
     })
     return NextResponse.json({ wallet: user.wallet + capped })

@@ -1,13 +1,21 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { couponValidationSchema, validationError } from "@/lib/validation"
+
+function isExpired(validTill: string) {
+  if (!validTill) return false
+  return new Date(`${validTill}T23:59:59.999Z`).getTime() < Date.now()
+}
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
   const totalParam = url.searchParams.get("total")
-  const orderTotal = totalParam ? parseFloat(totalParam) : null
+  const parsedTotal = totalParam == null ? null : Number(totalParam)
+  const orderTotal = parsedTotal != null && Number.isFinite(parsedTotal) && parsedTotal >= 0 ? parsedTotal : null
 
   const offers = db.getOffers().map((o) => {
-    if (orderTotal == null) return { ...o, canApply: false, discountAmount: 0 }
+    const expired = isExpired(o.validTill)
+    if (orderTotal == null || expired) return { ...o, expired, canApply: false, discountAmount: 0 }
     const canApply = orderTotal >= o.minOrder
     let discountAmount = 0
     if (canApply) {
@@ -17,7 +25,7 @@ export async function GET(req: Request) {
         discountAmount = o.maxDiscount
       }
     }
-    return { ...o, canApply, discountAmount: Math.round(discountAmount) }
+    return { ...o, expired, canApply, discountAmount: Math.round(discountAmount) }
   })
 
   return NextResponse.json(offers)
@@ -25,11 +33,17 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    const { code, orderTotal } = body
-    const offer = db.getOffers().find((o) => o.code.toUpperCase() === (code || "").toUpperCase())
+    const parsed = couponValidationSchema.safeParse(await req.json())
+    if (!parsed.success) {
+      return NextResponse.json({ valid: false, message: validationError(parsed.error) }, { status: 400 })
+    }
+    const { code, orderTotal } = parsed.data
+    const offer = db.getOffers().find((o) => o.code.toUpperCase() === code.toUpperCase())
     if (!offer) {
       return NextResponse.json({ valid: false, message: "Invalid coupon code" })
+    }
+    if (isExpired(offer.validTill)) {
+      return NextResponse.json({ valid: false, message: "This offer has expired" })
     }
     if (orderTotal < offer.minOrder) {
       return NextResponse.json({

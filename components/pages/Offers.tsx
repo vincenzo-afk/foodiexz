@@ -18,6 +18,7 @@ interface Offer {
   type?: string
   canApply?: boolean
   discountAmount?: number
+  expired?: boolean
 }
 
 const typeMeta: Record<string, { icon: any; label: string; tone: string }> = {
@@ -88,11 +89,11 @@ export function Offers() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-bold tracking-wide">{o.code}</span>
-                      <Badge variant="outline" className="text-[10px] uppercase">{meta.label}</Badge>
+                      <Badge variant="outline" className="text-[10px] uppercase">{o.expired ? "Expired" : meta.label}</Badge>
                     </div>
                     <p className="text-sm text-muted-foreground mt-0.5">{o.description}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Min order ₹{o.minOrder}
+                      Min order ₹{o.minOrder}{o.expired ? " · No longer available" : ""}
                       {o.validTill
                         ? ` · Valid till ${new Date(o.validTill).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
                         : ""}
@@ -104,6 +105,7 @@ export function Offers() {
                   size="sm"
                   className="shrink-0"
                   onClick={() => copyCode(o.code)}
+                  disabled={o.expired}
                 >
                   {copied === o.code ? (
                     <>

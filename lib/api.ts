@@ -1,22 +1,18 @@
 const API_URL =
   (typeof process !== "undefined" && process.env.NEXT_PUBLIC_API_URL) || "/api"
 
-interface ApiResponse<T> {
-  data?: T
-  error?: string
+const getAuthToken = () => {
+  if (typeof window === "undefined") return null
+  return window.localStorage.getItem("authToken")
 }
-
-const getAuthToken = () => localStorage.getItem("authToken")
 
 const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   const token = getAuthToken()
-  const headers: any = {
-    "Content-Type": "application/json",
-    ...options.headers,
-  }
+  const headers = new Headers(options.headers)
+  headers.set("Content-Type", "application/json")
 
   if (token) {
-    headers.Authorization = `Bearer ${token}`
+    headers.set("Authorization", `Bearer ${token}`)
   }
 
   const response = await fetch(`${API_URL}${endpoint}`, {
@@ -24,17 +20,18 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     headers,
   })
 
+  const data = await response.json().catch(() => null)
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: "Unknown error" }))
-    throw new Error(error.error || "API request failed")
+    const message = data?.error || data?.message || "API request failed"
+    throw new Error(message)
   }
 
-  return response.json()
+  return data
 }
 
 export const api = {
   // Restaurants
-  getRestaurants: async (filters?: { cuisine?: string; rating?: number }) => {
+  getRestaurants: async (_filters?: { cuisine?: string; rating?: number }) => {
     try {
       return await apiFetch("/restaurants")
     } catch (err) {
@@ -45,7 +42,7 @@ export const api = {
 
   getRestaurantById: async (id: string) => {
     try {
-      return await apiFetch(`/restaurants/${id}`)
+      return await apiFetch(`/restaurants/${encodeURIComponent(id)}`)
     } catch (err) {
       console.error("Error fetching restaurant:", err)
       return null
@@ -53,54 +50,42 @@ export const api = {
   },
 
   searchRestaurants: async (query: string) => {
-    try {
-      const dishes = await apiFetch(`/dishes/search?q=${encodeURIComponent(query)}`)
-      return dishes
-    } catch (err) {
-      console.error("Error searching:", err)
-      return []
-    }
+    return api.searchRestaurantsByQuery(query)
   },
 
   searchRestaurantsByQuery: async (query: string) => {
     try {
       return await apiFetch(`/restaurants/search?q=${encodeURIComponent(query)}`)
     } catch (err) {
+      console.error("Error searching restaurants:", err)
       return []
     }
   },
 
   searchDishesByQuery: async (query: string) => {
-    try {
-      return await apiFetch(`/dishes/search?q=${encodeURIComponent(query)}`)
-    } catch (err) {
-      return []
-    }
+    return api.searchDishes(query)
   },
 
   getOffersForTotal: async (orderTotal: number) => {
     try {
-      return await apiFetch(`/offers?total=${orderTotal}`)
+      return await apiFetch(`/offers?total=${encodeURIComponent(String(orderTotal))}`)
     } catch (err) {
+      console.error("Error fetching offers:", err)
       return []
     }
   },
 
   sendContact: async (data: { name: string; email: string; message: string }) => {
-    try {
-      return await apiFetch("/contact", {
-        method: "POST",
-        body: JSON.stringify(data),
-      })
-    } catch (err) {
-      throw err
-    }
+    return apiFetch("/contact", {
+      method: "POST",
+      body: JSON.stringify(data),
+    })
   },
 
   // Dishes
   getDishesByRestaurant: async (restaurantId: string) => {
     try {
-      const restaurant = await apiFetch(`/restaurants/${restaurantId}`)
+      const restaurant = await apiFetch(`/restaurants/${encodeURIComponent(restaurantId)}`)
       return restaurant.dishes || []
     } catch (err) {
       console.error("Error fetching dishes:", err)
@@ -119,7 +104,7 @@ export const api = {
 
   getDishById: async (id: string) => {
     try {
-      return await apiFetch(`/dishes/${id}`)
+      return await apiFetch(`/dishes/${encodeURIComponent(id)}`)
     } catch (err) {
       console.error("Error fetching dish:", err)
       return null
@@ -127,148 +112,118 @@ export const api = {
   },
 
   // Auth
-  signup: async (name: string, email: string, password: string, phone: string) => {
-    try {
-      const response = await apiFetch("/auth/signup", {
-        method: "POST",
-        body: JSON.stringify({ name, email, password, phone }),
-      })
-      if (response.token) {
-        localStorage.setItem("authToken", response.token)
-      }
-      return response
-    } catch (err) {
-      throw err
+  signup: async (name: string, email: string, password: string, phone?: string) => {
+    const response = await apiFetch("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify({ name, email, password, phone }),
+    })
+    if (response.token && typeof window !== "undefined") {
+      window.localStorage.setItem("authToken", response.token)
     }
+    return response
   },
 
   login: async (email: string, password: string) => {
-    try {
-      const response = await apiFetch("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      })
-      if (response.token) {
-        localStorage.setItem("authToken", response.token)
-      }
-      return response
-    } catch (err) {
-      throw err
+    const response = await apiFetch("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    })
+    if (response.token && typeof window !== "undefined") {
+      window.localStorage.setItem("authToken", response.token)
     }
+    return response
   },
 
   getCurrentUser: async () => {
     try {
       const response = await apiFetch("/user")
-      if (response?.user) {
-        localStorage.setItem("authToken", response.token || localStorage.getItem("authToken"))
+      if (response?.user && response.token && typeof window !== "undefined") {
+        window.localStorage.setItem("authToken", response.token)
       }
       return response?.user
-    } catch (err) {
+    } catch {
       return null
     }
   },
 
   logout: async () => {
-    localStorage.removeItem("authToken")
+    if (typeof window !== "undefined") window.localStorage.removeItem("authToken")
   },
 
   // Orders
-  placeOrder: async (order: any) => {
-    try {
-      return await apiFetch("/orders", {
-        method: "POST",
-        body: JSON.stringify(order),
-      })
-    } catch (err) {
-      throw err
-    }
+  placeOrder: async (order: unknown) => {
+    return apiFetch("/orders", {
+      method: "POST",
+      body: JSON.stringify(order),
+    })
   },
 
   getOrders: async () => {
     try {
       return await apiFetch("/orders")
-    } catch (err) {
+    } catch {
       return []
     }
   },
 
   getOrderById: async (id: string) => {
     try {
-      return await apiFetch(`/orders/${id}`)
-    } catch (err) {
+      return await apiFetch(`/orders/${encodeURIComponent(id)}`)
+    } catch {
       return null
     }
   },
 
   getOrderStatus: async (id: string) => {
     try {
-      return await apiFetch(`/orders/${id}/status`)
-    } catch (err) {
+      return await apiFetch(`/orders/${encodeURIComponent(id)}/status`)
+    } catch {
       return null
     }
   },
 
   getOrderTracking: async (id: string) => {
     try {
-      return await apiFetch(`/orders/${id}/tracking`)
-    } catch (err) {
+      return await apiFetch(`/orders/${encodeURIComponent(id)}/tracking`)
+    } catch {
       return null
     }
   },
 
   cancelOrder: async (orderId: string) => {
-    try {
-      const res = await fetch(`/api/orders/${orderId}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` },
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data?.message || "Failed to cancel order")
-      return data
-    } catch (err) {
-      throw err
-    }
+    return apiFetch(`/orders/${encodeURIComponent(orderId)}`, { method: "DELETE" })
   },
 
   submitReview: async (orderId: string, rating: number, review: string) => {
-    try {
-      return await apiFetch(`/orders/${orderId}/review`, {
-        method: "POST",
-        body: JSON.stringify({ rating, review }),
-      })
-    } catch (err) {
-      throw err
-    }
+    return apiFetch(`/orders/${encodeURIComponent(orderId)}/review`, {
+      method: "POST",
+      body: JSON.stringify({ rating, review }),
+    })
   },
 
   updateOrderStatus: async (id: string, status: string) => {
-    try {
-      return await apiFetch(`/orders/${id}/status`, {
-        method: "PUT",
-        body: JSON.stringify({ status }),
-      })
-    } catch (err) {
-      throw err
-    }
+    return apiFetch(`/orders/${encodeURIComponent(id)}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status }),
+    })
   },
 
   // Offers
   getOffers: async () => {
     try {
       return await apiFetch("/offers")
-    } catch (err) {
+    } catch {
       return []
     }
   },
 
   validateCoupon: async (code: string, orderTotal: number) => {
     try {
-      return await apiFetch("/offers/validate", {
+      return await apiFetch("/offers", {
         method: "POST",
         body: JSON.stringify({ code, orderTotal }),
       })
-    } catch (err) {
+    } catch {
       return { valid: false, message: "Error validating coupon" }
     }
   },
@@ -277,109 +232,72 @@ export const api = {
   getWallet: async () => {
     try {
       return await apiFetch("/wallet")
-    } catch (err) {
+    } catch {
       return null
     }
   },
 
   topUpWallet: async (amount: number) => {
-    try {
-      return await apiFetch("/wallet", {
-        method: "POST",
-        body: JSON.stringify({ amount }),
-      })
-    } catch (err) {
-      throw err
-    }
+    return apiFetch("/wallet", {
+      method: "POST",
+      body: JSON.stringify({ amount }),
+    })
   },
 
   // Addresses
   getAddresses: async () => {
     try {
       return await apiFetch("/addresses")
-    } catch (err) {
+    } catch {
       return []
     }
   },
 
-  createAddress: async (address: any) => {
-    try {
-      return await apiFetch("/addresses", {
-        method: "POST",
-        body: JSON.stringify(address),
-      })
-    } catch (err) {
-      throw err
-    }
+  createAddress: async (address: unknown) => {
+    return apiFetch("/addresses", {
+      method: "POST",
+      body: JSON.stringify(address),
+    })
   },
 
-  addAddress: async (address: any) => {
-    try {
-      return await apiFetch("/addresses", {
-        method: "POST",
-        body: JSON.stringify(address),
-      })
-    } catch (err) {
-      throw err
-    }
-  },
+  addAddress: async (address: unknown) => api.createAddress(address),
 
-  updateAddress: async (id: string, address: any) => {
-    try {
-      return await apiFetch(`/addresses/${id}`, {
-        method: "PUT",
-        body: JSON.stringify(address),
-      })
-    } catch (err) {
-      throw err
-    }
+  updateAddress: async (id: string, address: unknown) => {
+    return apiFetch(`/addresses/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      body: JSON.stringify(address),
+    })
   },
 
   deleteAddress: async (id: string) => {
-    try {
-      return await apiFetch(`/addresses/${id}`, {
-        method: "DELETE",
-      })
-    } catch (err) {
-      throw err
-    }
+    return apiFetch(`/addresses/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+    })
   },
 
   setDefaultAddress: async (id: string) => {
-    try {
-      return await apiFetch(`/addresses/${id}/default`, {
-        method: "PUT",
-      })
-    } catch (err) {
-      throw err
-    }
+    return apiFetch(`/addresses/${encodeURIComponent(id)}/default`, {
+      method: "PUT",
+    })
   },
 
   // Favorites
   addToFavorites: async (restaurantId: string) => {
-    try {
-      return await apiFetch(`/favorites/${restaurantId}`, {
-        method: "POST",
-      })
-    } catch (err) {
-      throw err
-    }
+    return apiFetch(`/favorites/${encodeURIComponent(restaurantId)}`, {
+      method: "POST",
+    })
   },
 
   removeFromFavorites: async (restaurantId: string) => {
-    try {
-      return await apiFetch(`/favorites/${restaurantId}`, {
-        method: "DELETE",
-      })
-    } catch (err) {
-      throw err
-    }
+    return apiFetch(`/favorites/${encodeURIComponent(restaurantId)}`, {
+      method: "DELETE",
+    })
   },
 
   getFavorites: async () => {
     try {
       return await apiFetch("/favorites")
-    } catch (err) {
+    } catch {
       return []
     }
   },

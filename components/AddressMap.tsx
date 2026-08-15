@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
@@ -33,8 +33,31 @@ export function AddressMap({ position, onSelect, label, className }: AddressMapP
   const mapRef = useRef<L.Map | null>(null)
   const markerRef = useRef<L.Marker | null>(null)
   const onSelectRef = useRef(onSelect)
-  onSelectRef.current = onSelect
   const [area, setArea] = useState(label || "")
+
+  useEffect(() => {
+    onSelectRef.current = onSelect
+  }, [onSelect])
+
+  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=16&addressdetails=1`,
+      )
+      if (!res.ok) return
+      const data = await res.json()
+      const a = data?.address || {}
+      const name = [
+        a.suburb || a.neighbourhood || a.quarter,
+        a.city || a.town || a.village || a.state,
+      ]
+        .filter(Boolean)
+        .join(", ")
+      if (name) setArea(name)
+    } catch {
+      // ignore — picker still works without a label
+    }
+  }, [])
 
   // Initialize map once
   useEffect(() => {
@@ -81,7 +104,7 @@ export function AddressMap({ position, onSelect, label, className }: AddressMapP
       map.setView(ll, 15)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [position])
+  }, [position, reverseGeocode])
 
   // Click-to-pin handler
   useEffect(() => {
@@ -95,27 +118,7 @@ export function AddressMap({ position, onSelect, label, className }: AddressMapP
     return () => {
       map.off("click", onClick)
     }
-  }, [])
-
-  const reverseGeocode = async (lat: number, lng: number) => {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=16&addressdetails=1`,
-      )
-      if (!res.ok) return
-      const data = await res.json()
-      const a = data?.address || {}
-      const name = [
-        a.suburb || a.neighbourhood || a.quarter,
-        a.city || a.town || a.village || a.state,
-      ]
-        .filter(Boolean)
-        .join(", ")
-      if (name) setArea(name)
-    } catch {
-      // ignore — picker still works without a label
-    }
-  }
+  }, [reverseGeocode])
 
   return (
     <div className={`relative w-full overflow-hidden rounded-xl border border-border ${className || ""}`}>

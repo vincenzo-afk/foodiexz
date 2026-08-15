@@ -360,7 +360,7 @@ export const offers = [
     minOrder: 199,
     maxDiscount: 100,
     discountPercent: 50,
-    validTill: "2025-12-31",
+    validTill: "2027-12-31",
     type: "percent"
   },
   {
@@ -370,7 +370,7 @@ export const offers = [
     minOrder: 299,
     maxDiscount: 100,
     discountPercent: null,
-    validTill: "2025-12-31",
+    validTill: "2027-12-31",
     type: "flat"
   },
   {
@@ -380,7 +380,7 @@ export const offers = [
     minOrder: 199,
     maxDiscount: 50,
     discountPercent: null,
-    validTill: "2025-12-31",
+    validTill: "2027-12-31",
     type: "free-delivery"
   }
 ];

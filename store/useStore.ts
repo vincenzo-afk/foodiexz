@@ -68,6 +68,7 @@ export interface Order {
   paymentMethod: string
   tip?: number
   deliveryNote?: string | null
+  idempotencyKey?: string
   rating?: number
   review?: string
 }
@@ -255,8 +256,8 @@ export const useStore = create<AppState>()(
         if (!get().isAuthenticated || !get().user) return
         try {
           const wallet = await api.getWallet()
-          if (wallet && typeof wallet.balance === "number" && get().user) {
-            get().updateProfile({ wallet: wallet.balance })
+          if (wallet && typeof wallet.wallet === "number" && get().user) {
+            get().updateProfile({ wallet: wallet.wallet })
           }
         } catch {
           // leave local balance unchanged on failure

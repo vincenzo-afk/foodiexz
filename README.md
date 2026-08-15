@@ -201,7 +201,7 @@ pnpm build
 pnpm start
 ```
 
-The root scripts are defined in [`package.json`](./package.json): `dev`, `build`, `start`, and `lint`.
+The root scripts are defined in [`package.json`](./package.json): `dev`, `build`, `start`, `lint`, `typecheck`, and `test`.
 
 ---
 
@@ -223,7 +223,9 @@ The root scripts are defined in [`package.json`](./package.json): `dev`, `build`
 |---|---|
 | `pnpm install` | Install the root dependency graph from `pnpm-lock.yaml`. |
 | `pnpm dev` | Start the Next.js development server. |
-| `pnpm lint` | Run the repository’s ESLint script. |
+| `pnpm lint` | Run the repository’s ESLint configuration. |
+| `pnpm typecheck` | Run strict TypeScript validation. |
+| `pnpm test` | Run the Vitest unit-test suite. |
 | `pnpm build` | Create a production Next.js build. |
 | `pnpm start` | Serve the production build. |
 | `cd server && npm install` | Install dependencies for the separate Express + SQLite backend. |
@@ -331,13 +333,13 @@ A valid offer response includes `valid: true`, the calculated `discount`, and a 
 
 | Method | Endpoint | Auth | Purpose |
 |---|---|---:|---|
-| `POST` | `/api/orders` | Yes | Create an order and return its generated `orderId`. Wallet payments are debited when sufficient funds exist. |
+| `POST` | `/api/orders` | Yes | Validate the restaurant, catalog items, address, totals, and payment method; create an order and return its generated `orderId`. Wallet payments are debited only after validation succeeds, and `Idempotency-Key` prevents duplicate checkout submissions. |
 | `GET` | `/api/orders` | Yes | List the authenticated user’s orders with items, status, ETA, payment method, and delivery address. |
 | `GET` | `/api/orders/:id` | Yes | Return one order and its items if it belongs to the authenticated user. |
 | `DELETE` | `/api/orders/:id` | Yes | Cancel an eligible `preparing` order. Cancellation is rejected after the rider is on the way or the order is delivered. |
 | `POST` | `/api/orders/:id/review` | Yes | Add a rating and review to an owned order. |
 | `GET` | `/api/orders/:id/status` | Yes | Return the current order status. |
-| `PUT` | `/api/orders/:id/status` | Yes | Update status using an allowed status value. |
+| `PUT` | `/api/orders/:id/status` | Yes | Allow an authenticated customer to cancel their own `preparing` order; other status transitions are controlled by the server’s delivery simulation. |
 | `GET` | `/api/orders/:id/tracking` | Yes | Return status history, rider position, route, progress, distance, and ETA. |
 
 The tracking view polls the tracking endpoint every five seconds and uses Leaflet to display the delivery route. The route geometry is requested from OSRM when available, with a straight-line fallback in the data layer.
@@ -421,6 +423,8 @@ foodiexz/
 - [x] Wallet top-ups and wallet payment validation.
 - [x] Orders, cancellation rules, reviews, notifications, and order history.
 - [x] Simulated delivery tracking with Leaflet, ETA, status history, and OSRM route lookup.
+- [x] Expiry-aware offers and coupon validation with clear eligibility feedback.
+- [x] Idempotent checkout requests, server-side catalog validation, and current-price reorder checks.
 - [x] Responsive theme tokens, dark-mode styles, accessible UI primitives, and toast feedback.
 - [x] Vercel Analytics integration in the root layout.
 
@@ -431,7 +435,7 @@ The following items are the most important next steps for a production release:
 1. Replace the process-local `lib/db.ts` records with a durable production database and migrations.
 2. Select one backend architecture and remove or formally isolate the duplicate Express + SQLite path.
 3. Integrate a real payment provider, webhook verification, refunds, and idempotent order creation.
-4. Add automated unit, integration, and end-to-end tests with coverage reporting.
+4. Expand the current unit tests into route-level and end-to-end coverage with coverage reporting.
 5. Add continuous integration for linting, type-checking, builds, dependency review, and security scanning.
 6. Add durable contact-message handling, email or push notifications, and operational monitoring.
 7. Configure rate limiting, input schemas, audit logging, secret rotation, and production CORS policy.
@@ -445,8 +449,8 @@ The following items are the most important next steps for a production release:
 - `JWT_SECRET` has a development fallback in the current code. Production deployments must override it with a high-entropy secret.
 - Public OpenStreetMap, Nominatim, and OSRM services are used without application-owned rate limiting or a commercial service agreement.
 - The repository contains a standalone Express + SQLite backend alongside the current Next.js Route Handlers. They have different persistence behavior and should not be run as if they share state.
-- No automated test suite, coverage report, CI workflow, Dockerfile, or Kubernetes manifest is currently tracked.
-- The root package is still named `my-v0-project` even though the product and repository are named FoodiezX; rename it when package metadata stability matters.
+- Automated coverage currently focuses on validation and tracking-domain unit tests; route and browser coverage still needs to grow.
+- No coverage report, CI workflow, Dockerfile, or Kubernetes manifest is currently tracked.
 
 [Changelog and repository history](https://github.com/vincenzo-afk/foodiexz/commits/main) · [Open issues](https://github.com/vincenzo-afk/foodiexz/issues)
 
@@ -454,22 +458,17 @@ The following items are the most important next steps for a production release:
 
 ## Testing
 
-The root repository currently exposes lint and build scripts but no dedicated test script or test framework configuration.
-
-```bash
-pnpm lint
-pnpm build
-```
-
-For a clean validation run, install dependencies from the lockfile before executing the commands above:
+The repository now exposes lint, type-check, test, and build scripts.
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm lint
+pnpm typecheck
+pnpm test
 pnpm build
 ```
 
-The project does not currently publish coverage metrics. At the time of this audit, `pnpm build` completes successfully, while `pnpm lint` exits because the root manifest defines the script but does not include an `eslint` executable in its dependencies. Until a test runner and working lint configuration are added, the minimum release check should include a successful production build, manual verification of authentication, checkout, order tracking, wallet, address, favorites, and search flows, and a smoke test of `GET /api/health`.
+The current automated suite covers validation schemas, tracking math, future-timestamp clamping, and user-scoped order idempotency lookup. Coverage reporting and browser-level regression tests are not yet configured. The release smoke test should additionally verify authentication, restaurant search, checkout, address management, coupon expiry, wallet top-up, cancellation, review eligibility, and protected tracking access.
 
 ---
 
@@ -535,7 +534,7 @@ Use conventional-style commit messages such as `feat: add restaurant sorting`, `
 
 ## Security
 
-FoodiezX includes basic security building blocks—bcrypt password hashing, JWT verification, ownership checks for authenticated resources, and server-side API route guards. These are useful foundations, not a complete production security program.
+FoodiezX includes bcrypt password hashing, JWT verification, ownership checks for authenticated resources, validated request bodies, protected order status/tracking endpoints, catalog-backed order items, and idempotent checkout requests. These are useful foundations, not a complete production security program.
 
 Before production use:
 

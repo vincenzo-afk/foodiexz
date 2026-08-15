@@ -18,7 +18,7 @@ const AddressMap = dynamic(() => import("../AddressMap"), {
 })
 
 export function Addresses() {
-  const { user, isAuthenticated, deleteAddress, setDefaultAddress } = useStore()
+  const { user, isAuthenticated } = useStore()
   const [list, setList] = useState<Address[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -58,14 +58,8 @@ export function Addresses() {
     } else {
       try {
         await api.createAddress({ ...form, lat: pin?.lat, lng: pin?.lng })
-        const newAddr: Address = {
-          ...form,
-          lat: pin?.lat,
-          lng: pin?.lng,
-          id: "ADDR" + Date.now(),
-          isDefault: list.length === 0,
-        }
-        setList((prev) => (list.length === 0 ? [newAddr] : prev))
+        const updated = await api.getAddresses()
+        setList(Array.isArray(updated) ? updated : [])
         toast.success("Address added")
       } catch (err: any) {
         toast.error(err?.message || "Failed to add address")
@@ -73,6 +67,7 @@ export function Addresses() {
       }
     }
     setForm({ type: "Home", address: "", landmark: "" })
+    setPin(null)
     setEditing(null)
     setShowForm(false)
   }
@@ -204,7 +199,16 @@ export function Addresses() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <button
-                onClick={() => setDefaultAddress(addr.id)}
+                onClick={async () => {
+                  try {
+                    await api.setDefaultAddress(addr.id)
+                    const updated = await api.getAddresses()
+                    setList(Array.isArray(updated) ? updated : [])
+                    toast.success("Default address updated")
+                  } catch (err: any) {
+                    toast.error(err?.message || "Failed to update default address")
+                  }
+                }}
                 className="text-xs text-primary hover:underline"
               >
                 {addr.isDefault ? (
@@ -226,9 +230,14 @@ export function Addresses() {
                 Edit
               </button>
               <button
-                onClick={() => {
-                  deleteAddress(addr.id)
-                  setList((prev) => prev.filter((a) => a.id !== addr.id))
+                onClick={async () => {
+                  try {
+                    await api.deleteAddress(addr.id)
+                    setList((prev) => prev.filter((a) => a.id !== addr.id))
+                    toast.success("Address deleted")
+                  } catch (err: any) {
+                    toast.error(err?.message || "Failed to delete address")
+                  }
                 }}
                 className="text-xs text-destructive hover:underline"
               >

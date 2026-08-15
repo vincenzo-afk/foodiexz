@@ -2,12 +2,16 @@ import bcryptjs from "bcryptjs"
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { signToken } from "@/lib/auth"
+import { loginSchema, validationError } from "@/lib/validation"
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json()
-    const { email, password } = body
-    const user = db.getUserByEmail(email)
+    const parsed = loginSchema.safeParse(await req.json())
+    if (!parsed.success) {
+      return NextResponse.json({ error: validationError(parsed.error) }, { status: 400 })
+    }
+    const { email, password } = parsed.data
+    const user = db.getUserByEmail(email.toLowerCase())
     if (!user || !(await bcryptjs.compare(password, user.password))) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }

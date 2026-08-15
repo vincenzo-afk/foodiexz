@@ -1,6 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { ArrowLeft, MapPin, Wallet, CreditCard, Banknote, Plus, Check } from "lucide-react"
 import { api } from "../../lib/api"
 import { demoDeliveryAddress as DEMO_DELIVERY } from "../../lib/seedData"
@@ -18,10 +18,7 @@ export function Checkout() {
     getMultiRestaurantFee,
     isAuthenticated,
     placeOrder,
-    addAddress,
-    deleteAddress,
-    setDefaultAddress,
-    clearCart,
+    updateProfile,
   } = useStore()
 
   const [loading, setLoading] = useState(false)
@@ -33,7 +30,7 @@ export function Checkout() {
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [newAddress, setNewAddress] = useState({ type: "Home", address: "", landmark: "", isDefault: false })
   const [couponMessage, setCouponMessage] = useState("")
-  const [addressList, setAddressList] = useState<Address[]>([])
+  const addressList = user?.addresses || []
   const [showConfetti, setShowConfetti] = useState(false)
   const [availableOffers, setAvailableOffers] = useState<any[]>([])
   const [appliedCode, setAppliedCode] = useState<string | null>(null)
@@ -41,10 +38,6 @@ export function Checkout() {
   useEffect(() => {
     if (!isAuthenticated) navigate("/auth")
   }, [isAuthenticated, navigate])
-
-  useEffect(() => {
-    if (user?.addresses) setAddressList(user.addresses)
-  }, [user])
 
   // Load offers available for the current cart total so customers can pick one in one tap.
   useEffect(() => {
@@ -89,6 +82,7 @@ export function Checkout() {
   }
 
   const handlePlaceOrder = async () => {
+    if (loading) return
     if (!selectedAddress) {
       toast.error("Please add a delivery address")
       setShowAddressForm(true)
@@ -116,6 +110,7 @@ export function Checkout() {
         deliveryAddress,
         tip: tip || undefined,
         deliveryNote: deliveryNote.trim() || undefined,
+        idempotencyKey: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
       })
       setShowConfetti(true)
       setTimeout(() => {
@@ -127,26 +122,21 @@ export function Checkout() {
     }
   }
 
-  const handleAddAddress = () => {
+  const handleAddAddress = async () => {
     if (!newAddress.address.trim()) {
       toast.error("Please enter an address")
       return
     }
-    addAddress(newAddress)
-    setAddressList((prev) => {
-      const updated = [
-        ...prev.map((a) => ({ ...a, isDefault: false })),
-        {
-          ...newAddress,
-          id: "ADDR" + Date.now(),
-          isDefault: prev.length === 0,
-        },
-      ]
-      return updated
-    })
-    setNewAddress({ type: "Home", address: "", landmark: "", isDefault: false })
-    setShowAddressForm(false)
-    toast.success("Address added")
+    try {
+      await api.createAddress({ ...newAddress, isDefault: addressList.length === 0 || newAddress.isDefault })
+      const addresses = await api.getAddresses()
+      updateProfile({ addresses })
+      setNewAddress({ type: "Home", address: "", landmark: "", isDefault: false })
+      setShowAddressForm(false)
+      toast.success("Address added")
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to add address")
+    }
   }
 
   return (
@@ -253,20 +243,28 @@ export function Checkout() {
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => {
-                    setDefaultAddress(addr.id)
-                    setAddressList((prev) =>
-                      prev.map((a) => ({ ...a, isDefault: a.id === addr.id })),
-                    )
+                  onClick={async () => {
+                    try {
+                      await api.setDefaultAddress(addr.id)
+                      const addresses = await api.getAddresses()
+                      updateProfile({ addresses })
+                    } catch (err: any) {
+                      toast.error(err?.message || "Failed to set default address")
+                    }
                   }}
                   className="text-xs text-primary hover:underline"
                 >
                   Set default
                 </button>
                 <button
-                  onClick={() => {
-                    deleteAddress(addr.id)
-                    setAddressList((prev) => prev.filter((a) => a.id !== addr.id))
+                  onClick={async () => {
+                    try {
+                      await api.deleteAddress(addr.id)
+                      const addresses = await api.getAddresses()
+                      updateProfile({ addresses })
+                    } catch (err: any) {
+                      toast.error(err?.message || "Failed to delete address")
+                    }
                   }}
                   className="text-xs text-destructive hover:underline"
                 >
@@ -391,7 +389,7 @@ export function Checkout() {
         {availableOffers.length === 0 && subtotal > 0 && (
           <p className="text-xs text-muted-foreground mt-2">
             No offers qualify for this order yet — check the{" "}
-            <a href="/offers" className="text-primary underline">Offers page</a> for upcoming deals.
+            <Link to="/offers" className="text-primary underline">Offers page</Link> for upcoming deals.
           </p>
         )}
       </section>

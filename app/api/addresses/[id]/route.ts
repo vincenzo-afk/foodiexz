@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server"
 import { db } from "@/lib/db"
 import { requireAuth } from "@/lib/auth"
+import { deliveryAddressSchema, validationError } from "@/lib/validation"
+import { z } from "zod"
 
 function ownAddress(id: string, userId: string) {
   const a = db.getAddressById(id)
@@ -14,13 +16,24 @@ export async function PUT(
   const auth = await requireAuth(req)
   if (auth instanceof NextResponse) return auth
   const { id } = await params
-  if (!ownAddress(id, auth.userId)) return NextResponse.json({ error: "Not found" }, { status: 404 })
+  const existing = ownAddress(id, auth.userId)
+  if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 })
 
   try {
-    const body = await req.json()
-    const { type, address, landmark, isDefault } = body
+    const parsed = deliveryAddressSchema.partial().extend({ isDefault: z.boolean().optional() }).safeParse(await req.json())
+    if (!parsed.success) {
+      return NextResponse.json({ error: validationError(parsed.error) }, { status: 400 })
+    }
+    const { type, address, landmark, lat, lng, isDefault } = parsed.data
     if (isDefault) db.clearDefaultsForUser(auth.userId)
-    db.updateAddress(id, { type, address, landmark, isDefault: !!isDefault })
+    db.updateAddress(id, {
+      type: type ?? existing.type,
+      address: address ?? existing.address,
+      landmark: landmark ?? existing.landmark,
+      lat: lat ?? existing.lat,
+      lng: lng ?? existing.lng,
+      isDefault: isDefault ?? existing.isDefault,
+    })
     return NextResponse.json({ success: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 })

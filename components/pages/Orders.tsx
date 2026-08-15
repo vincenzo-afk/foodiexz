@@ -45,28 +45,51 @@ export function Orders() {
     }
   }, [isAuthenticated])
 
-  // Reorder: same items from the same restaurant, exactly like the real apps do.
+  // Reorder with current menu availability and prices instead of replaying stale order data.
   const handleReorder = async (order: any) => {
-    const data = await api.getOrderById(order.id)
-    const fullOrder = data as any
-    if (!fullOrder?.items || fullOrder.items.length === 0) {
-      toast.error("Could not load this order's items")
-      return
+    try {
+      const [fullOrder, restaurant] = await Promise.all([
+        api.getOrderById(order.id),
+        api.getRestaurantById(order.restaurantId),
+      ])
+      if (!fullOrder?.items || fullOrder.items.length === 0 || !restaurant) {
+        toast.error("Could not load this order's current menu")
+        return
+      }
+
+      const currentDishes = new Map((restaurant.dishes || []).map((dish: any) => [dish.id, dish]))
+      const availableItems = fullOrder.items
+        .map((item: any) => ({ item, dish: currentDishes.get(item.dishId) }))
+        .filter(({ dish }: { dish: any }) => dish && dish.isOpen !== false)
+
+      if (availableItems.length === 0) {
+        toast.error("None of the items from this order are currently available")
+        return
+      }
+
+      clearCart()
+      for (const { item, dish } of availableItems) {
+        addToCart({
+          dishId: dish.id,
+          name: dish.name,
+          price: dish.price,
+          image: dish.image || item.image || "",
+          restaurantId: restaurant.id,
+          restaurantName: restaurant.name,
+          isVeg: dish.isVeg,
+        })
+      }
+
+      const skipped = fullOrder.items.length - availableItems.length
+      toast.success(
+        skipped > 0
+          ? `${availableItems.length} item(s) reordered; ${skipped} unavailable item(s) skipped`
+          : `Reordered ${availableItems.length} item(s) from ${restaurant.name}`,
+      )
+      navigate("/cart")
+    } catch (err: any) {
+      toast.error(err?.message || "Could not reorder this order")
     }
-    clearCart()
-    for (const item of fullOrder.items) {
-      addToCart({
-        dishId: item.dishId || item.name,
-        name: item.name,
-        price: item.price,
-        image: item.image || "",
-        restaurantId: fullOrder.restaurantId,
-        restaurantName: fullOrder.restaurantName,
-        isVeg: item.isVeg ?? true,
-      })
-    }
-    toast.success(`Reordered ${fullOrder.items.length} item(s) from ${fullOrder.restaurantName}`)
-    navigate("/cart")
   }
 
   // Cancel: allowed before the rider is on the way. Once on-the-way, cancellation is locked.
