@@ -18,6 +18,7 @@ export function Search() {
 
   useEffect(() => {
     if (!searchQuery.trim()) return
+    void api.trackEvent({ name: "search_submitted", properties: { queryLength: searchQuery.trim().length } })
     setLoading(true)
     Promise.allSettled([
       api.searchRestaurantsByQuery(searchQuery),

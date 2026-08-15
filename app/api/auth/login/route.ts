@@ -27,6 +27,10 @@ export async function POST(req: Request) {
         wallet: user.wallet,
         addresses,
         dietaryPreference: user.dietaryPreference,
+        role: user.role,
+        notificationPreferences: user.notificationPreferences,
+        timezone: user.timezone,
+        personalizationOptOut: user.personalizationOptOut,
       },
     })
   } catch (err: any) {

@@ -281,6 +281,41 @@ export const api = {
     })
   },
 
+  // Notifications
+  getNotifications: async () => apiFetch("/notifications"),
+  markNotificationRead: async (id: string) => apiFetch(`/notifications/${encodeURIComponent(id)}`, { method: "PUT" }),
+  markAllNotificationsAsRead: async () => apiFetch("/notifications", { method: "POST" }),
+  updateNotificationPreferences: async (preferences: unknown) => apiFetch("/notifications/preferences", { method: "PUT", body: JSON.stringify(preferences) }),
+
+  // Scheduled orders and checkout validation
+  getScheduledOrders: async () => apiFetch("/scheduled-orders"),
+  createScheduledOrder: async (order: unknown) => apiFetch("/scheduled-orders", { method: "POST", body: JSON.stringify(order) }),
+  updateScheduledOrder: async (id: string, data: unknown) => apiFetch(`/scheduled-orders/${encodeURIComponent(id)}`, { method: "PUT", body: JSON.stringify(data) }),
+  cancelScheduledOrder: async (id: string) => apiFetch(`/scheduled-orders/${encodeURIComponent(id)}`, { method: "DELETE" }),
+  validateCart: async (payload: unknown) => apiFetch("/cart/validate", { method: "POST", body: JSON.stringify(payload) }),
+
+  trackEvent: async (event: unknown) => {
+    try {
+      return await apiFetch("/analytics", { method: "POST", body: JSON.stringify(event) })
+    } catch {
+      return { accepted: false }
+    }
+  },
+
+  getRecommendations: async () => {
+    try {
+      return await apiFetch("/recommendations")
+    } catch {
+      return { sections: { recommended: [], orderAgain: [], fastNearby: [] }, personalized: false }
+    }
+  },
+
+  // Admin
+  getAdminOverview: async () => apiFetch("/admin/overview"),
+  getAdminUsers: async () => apiFetch("/admin/users"),
+  updateUserRole: async (id: string, role: string) => apiFetch(`/admin/users/${encodeURIComponent(id)}/role`, { method: "PUT", body: JSON.stringify({ role }) }),
+  getAdminAudit: async () => apiFetch("/admin/audit"),
+
   // Favorites
   addToFavorites: async (restaurantId: string) => {
     return apiFetch(`/favorites/${encodeURIComponent(restaurantId)}`, {

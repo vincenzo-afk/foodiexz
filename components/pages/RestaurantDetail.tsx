@@ -20,6 +20,7 @@ export function RestaurantDetail() {
   useEffect(() => {
     if (id) {
       addToRecentlyViewed(id)
+      void api.trackEvent({ name: "restaurant_viewed", restaurantId: id, properties: {} })
       api.getRestaurantById(id).then((data) => {
         setRestaurant(data)
         setLoading(false)

@@ -26,6 +26,7 @@ export const createOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1).max(50),
   tip: z.number().finite().nonnegative().max(10_000).optional().default(0),
   deliveryNote: z.string().trim().max(500).nullable().optional(),
+  couponCode: z.string().trim().max(64).optional(),
   idempotencyKey: z.string().trim().min(8).max(128).optional(),
 })
 

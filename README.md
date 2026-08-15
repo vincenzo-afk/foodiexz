@@ -172,7 +172,10 @@ Create `.env.local` in the repository root for the Next.js runtime. The file is 
 ```env
 # Optional: defaults to the same-origin Next.js Route Handlers.
 NEXT_PUBLIC_API_URL=/api
-
+# Optional: signups using this email receive the admin role.
+ADMIN_EMAIL=admin@example.com
+# Required for scheduled-order cron processing when using a deployment job.
+CRON_SECRET=replace-with-a-long-random-secret
 # Required for production. The code currently falls back to a development secret.
 JWT_SECRET=replace-with-a-long-random-secret
 ```
@@ -181,6 +184,8 @@ JWT_SECRET=replace-with-a-long-random-secret
 |---|---|---|---|
 | `NEXT_PUBLIC_API_URL` | No | `/api` | [`lib/api.ts`](./lib/api.ts); set this only when the API is hosted at another origin. |
 | `JWT_SECRET` | Strongly recommended in production | `foodiezx-dev-secret` in the current code | [`lib/auth.ts`](./lib/auth.ts) for signing and verifying JWTs. |
+| `ADMIN_EMAIL` | No | Unset | [`app/api/auth/signup/route.ts`](./app/api/auth/signup/route.ts); matching signups receive the `admin` role. |
+| `CRON_SECRET` | Recommended when using scheduled jobs | Unset | [`app/api/jobs/scheduled-orders/route.ts`](./app/api/jobs/scheduled-orders/route.ts); protects scheduled-order processing. |
 
 Do not commit real secrets, production tokens, or user data. The current root code intentionally provides a development fallback for `JWT_SECRET`; production deployments must override it.
 
@@ -192,7 +197,7 @@ Start the Next.js development server:
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The main client routes include `/`, `/search`, `/restaurant/:id`, `/cart`, `/checkout`, `/auth`, `/orders`, `/order/:id`, `/profile`, `/favorites`, `/offers`, `/addresses`, and `/settings`. The informational routes are listed in [`App.tsx`](./App.tsx).
+Open [http://localhost:3000](http://localhost:3000). The main client routes include `/`, `/search`, `/restaurant/:id`, `/cart`, `/checkout`, `/auth`, `/orders`, `/order/:id`, `/profile`, `/favorites`, `/offers`, `/addresses`, `/settings`, `/scheduled-orders`, and `/admin`. The informational routes are listed in [`App.tsx`](./App.tsx).
 
 For a production-like local run:
 
@@ -300,7 +305,7 @@ The current API is implemented by Next.js Route Handlers under [`app/api`](./app
 |---|---|---:|---|
 | `POST` | `/api/auth/signup` | No | Create an account, hash the password, seed a ₹500 wallet balance, and return a token. |
 | `POST` | `/api/auth/login` | No | Validate credentials and return a token plus user profile. |
-| `GET` | `/api/user` | Yes | Return the current user, addresses, wallet, dietary preference, and a refreshed token. |
+| `GET` | `/api/user` | Yes | Return the current user, role, memberships, addresses, wallet, dietary preference, notification metadata, and a refreshed token. |
 | `GET` | `/api/health` | No | Return `{ "status": "ok" }`. |
 
 Example login:
@@ -359,6 +364,21 @@ The tracking view polls the tracking endpoint every five seconds and uses Leafle
 | `DELETE` | `/api/favorites/:restaurantId` | Yes | Remove a restaurant from favorites. |
 | `GET` | `/api/wallet` | Yes | Return wallet balance and the latest wallet transactions. |
 | `POST` | `/api/wallet` | Yes | Top up the wallet; each request is capped at ₹10,000. |
+| `GET` | `/api/notifications` | Yes | List server-backed notifications and the unread count. |
+| `PUT` | `/api/notifications/:id` | Yes | Mark an owned notification as read. |
+| `POST` | `/api/notifications` | Yes | Mark all owned notifications as read. |
+| `PUT` | `/api/notifications/preferences` | Yes | Save in-app, email, order-update, promotion, timezone, and personalization preferences. |
+| `POST` | `/api/cart/validate` | No | Recalculate catalog prices, availability, fees, and cart changes before checkout. |
+| `GET` | `/api/recommendations` | Optional | Return deterministic, explainable discovery sections with anonymous fallbacks. |
+| `POST` | `/api/analytics` | Optional | Record a validated privacy-minimized funnel event. |
+| `GET` | `/api/scheduled-orders` | Yes | List the authenticated customer’s scheduled orders. |
+| `POST` | `/api/scheduled-orders` | Yes | Create a future order with cutoff and timezone metadata. |
+| `PUT`/`DELETE` | `/api/scheduled-orders/:id` | Yes | Reschedule or cancel an owned scheduled order before its cutoff. |
+| `POST` | `/api/jobs/scheduled-orders` | Admin or cron secret | Revalidate and process due scheduled orders idempotently. |
+| `GET` | `/api/admin/overview` | Admin | Return operational metrics, active orders, failed notifications, and audit activity. |
+| `GET` | `/api/admin/users` | Admin | List users without password fields. |
+| `PUT` | `/api/admin/users/:id/role` | Admin | Assign `user`, `restaurant_manager`, or `admin` roles. |
+| `GET` | `/api/admin/audit` | Admin | List role-change audit records. |
 | `POST` | `/api/contact` | No | Accept a contact message in the demo in-memory inbox. |
 
 Protected routes return `401` for a missing or invalid token. Typical validation failures return `400`, missing resources return `404`, insufficient wallet balance returns `402`, and invalid order state transitions can return `409`.
@@ -424,33 +444,35 @@ foodiexz/
 - [x] Orders, cancellation rules, reviews, notifications, and order history.
 - [x] Simulated delivery tracking with Leaflet, ETA, status history, and OSRM route lookup.
 - [x] Expiry-aware offers and coupon validation with clear eligibility feedback.
-- [x] Idempotent checkout requests, server-side catalog validation, and current-price reorder checks.
+- [x] Idempotent checkout requests, server-side catalog validation, current-price reorder checks, coupon reconciliation, and cart validation snapshots.
+- [x] Role-aware admin dashboard with server-side role guards, user role management, audit logs, operational metrics, and funnel counters.
+- [x] Server-backed in-app notifications with unread counts, read actions, order-state events, preference controls, and deduplication keys.
+- [x] Scheduled orders with cutoff windows, timezone metadata, cancellation, rescheduling, cron-compatible processing, and menu/price revalidation.
+- [x] Deterministic explainable recommendations, personalized discovery controls, and privacy-minimized search, view, cart, and order analytics.
 - [x] Responsive theme tokens, dark-mode styles, accessible UI primitives, and toast feedback.
 - [x] Vercel Analytics integration in the root layout.
 
 ### Roadmap
 
-The following items are the most important next steps for a production release:
+The next production milestones are:
 
-1. Replace the process-local `lib/db.ts` records with a durable production database and migrations.
-2. Select one backend architecture and remove or formally isolate the duplicate Express + SQLite path.
-3. Integrate a real payment provider, webhook verification, refunds, and idempotent order creation.
-4. Expand the current unit tests into route-level and end-to-end coverage with coverage reporting.
-5. Add continuous integration for linting, type-checking, builds, dependency review, and security scanning.
-6. Add durable contact-message handling, email or push notifications, and operational monitoring.
-7. Configure rate limiting, input schemas, audit logging, secret rotation, and production CORS policy.
-8. Add a maintained issue template, pull request template, changelog, and explicit open-source license.
+1. Move `lib/db.ts` to a durable transactional database with migrations, repository helpers, and wallet/order reconciliation.
+2. Add a real payment provider, webhook verification, refunds, and persistent checkout reservations.
+3. Add email/push provider adapters behind the existing notification event and retry contracts.
+4. Add restaurant-manager membership CRUD, menu availability controls, delivery zones, and operational order controls.
+5. Expand route and browser coverage, accessibility automation, dependency review, and smoke deployment checks.
+6. Add durable contact-message handling, retention policies, analytics aggregation, export controls, and feature-flagged rollouts.
 
 ### Known Limitations
 
-- The current Next.js data layer is in memory. A restart or serverless instance replacement loses users, addresses, orders, favorites, reviews, and wallet transaction history.
+- The current Next.js data layer is still in memory. A restart or serverless instance replacement loses users, addresses, orders, favorites, reviews, wallet history, notifications, scheduled orders, audit logs, and analytics events. The new feature contracts are ready for a durable repository migration, but they are not production-grade persistence yet.
 - The contact endpoint stores messages in an in-memory array and is therefore not a durable support inbox.
 - The wallet transaction log is also process-local; wallet balance changes should not be treated as production-grade accounting.
 - `JWT_SECRET` has a development fallback in the current code. Production deployments must override it with a high-entropy secret.
 - Public OpenStreetMap, Nominatim, and OSRM services are used without application-owned rate limiting or a commercial service agreement.
 - The repository contains a standalone Express + SQLite backend alongside the current Next.js Route Handlers. They have different persistence behavior and should not be run as if they share state.
-- Automated coverage currently focuses on validation and tracking-domain unit tests; route and browser coverage still needs to grow.
-- No coverage report, CI workflow, Dockerfile, or Kubernetes manifest is currently tracked.
+- Automated coverage currently focuses on validation, tracking, notification deduplication, scheduled-order due selection, and order idempotency; route and browser coverage still needs to grow.
+- A CI quality workflow is tracked at [`.github/workflows/ci.yml`](./.github/workflows/ci.yml), but browser tests, deployment smoke tests, and coverage reporting are not yet configured.
 
 [Changelog and repository history](https://github.com/vincenzo-afk/foodiexz/commits/main) · [Open issues](https://github.com/vincenzo-afk/foodiexz/issues)
 
@@ -468,7 +490,7 @@ pnpm test
 pnpm build
 ```
 
-The current automated suite covers validation schemas, tracking math, future-timestamp clamping, and user-scoped order idempotency lookup. Coverage reporting and browser-level regression tests are not yet configured. The release smoke test should additionally verify authentication, restaurant search, checkout, address management, coupon expiry, wallet top-up, cancellation, review eligibility, and protected tracking access.
+The current automated suite covers validation schemas, tracking math, future-timestamp clamping, user-scoped order idempotency, notification deduplication, and scheduled-order due selection. Browser-level regression tests and coverage reporting are not yet configured. The release smoke test should additionally verify authentication, cart price reconciliation, checkout recovery, role-restricted admin access, notification read state, scheduled-order creation/processing, recommendation opt-out, analytics permissions, address management, coupon expiry, wallet top-up, cancellation, review eligibility, and protected tracking access.
 
 ---
 

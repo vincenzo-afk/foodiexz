@@ -4,6 +4,8 @@
 // for the lifetime of the serverless instance.
 import { restaurants as seedRestaurants, dishes as seedDishes, offers as seedOffers } from "./seedData"
 
+export type UserRole = "user" | "admin" | "restaurant_manager"
+
 export interface DbRestaurant {
   id: string
   name: string
@@ -47,6 +49,15 @@ export interface DbUser {
   dietaryPreference: string
   wallet: number
   createdAt: string
+  role: UserRole
+  notificationPreferences?: {
+    inApp: boolean
+    email: boolean
+    orderUpdates: boolean
+    promotions: boolean
+  }
+  timezone?: string
+  personalizationOptOut?: boolean
 }
 
 export interface DbAddress {
@@ -108,6 +119,63 @@ export interface DbOffer {
   discountPercent: number | null
   validTill: string
   type?: string
+}
+
+export interface DbRestaurantMembership {
+  userId: string
+  restaurantId: string
+  createdAt: string
+}
+
+export interface DbNotification {
+  id: string
+  userId: string
+  title: string
+  message: string
+  type: "info" | "success" | "warning" | "order"
+  link?: string
+  eventKey?: string
+  read: boolean
+  deliveryStatus: "in-app" | "queued" | "sent" | "failed"
+  createdAt: string
+}
+
+export interface DbScheduledOrder {
+  id: string
+  userId: string
+  restaurantId: string
+  restaurantName: string
+  items: DbOrderItem[]
+  total: number
+  paymentMethod: string
+  deliveryAddress: string
+  scheduledFor: string
+  timezone: string
+  cutoffAt: string
+  status: "scheduled" | "ready" | "failed" | "cancelled"
+  failureReason?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface DbAnalyticsEvent {
+  id: string
+  name: string
+  userId?: string
+  restaurantId?: string
+  sessionId?: string
+  properties: Record<string, string | number | boolean | null>
+  createdAt: string
+}
+
+export interface DbAuditLog {
+  id: string
+  actorUserId: string
+  action: string
+  targetType: string
+  targetId: string
+  metadata: Record<string, string | number | boolean | null>
+  createdAt: string
 }
 
 const restaurants: DbRestaurant[] = seedRestaurants.map((r) => ({
@@ -221,6 +289,11 @@ const addresses: DbAddress[] = []
 const orders: DbOrder[] = []
 const orderItems: DbOrderItem[] = []
 const favorites: DbFavorite[] = []
+const memberships: DbRestaurantMembership[] = []
+const notifications: DbNotification[] = []
+const scheduledOrders: DbScheduledOrder[] = []
+const analyticsEvents: DbAnalyticsEvent[] = []
+const auditLogs: DbAuditLog[] = []
 
 export const db = {
   fetchRoutePolyline,
@@ -241,8 +314,20 @@ export const db = {
   getDishById: (id: string) => dishes.find((d) => d.id === id),
   getOffers: () => offers,
 
-  getUserByEmail: (email: string) => users.find((u) => u.email === email),
+  getUserByEmail: (email: string) => users.find((u) => u.email.toLowerCase() === email.toLowerCase()),
   getUserById: (id: string) => users.find((u) => u.id === id),
+  getUsers: () => users,
+  getUserRole: (id: string): UserRole => users.find((u) => u.id === id)?.role || "user",
+  updateUserRole: (id: string, role: UserRole) => {
+    const user = users.find((u) => u.id === id)
+    if (user) user.role = role
+    return user
+  },
+  updateUserPreferences: (id: string, data: Partial<Pick<DbUser, "notificationPreferences" | "timezone" | "personalizationOptOut" | "dietaryPreference">>) => {
+    const user = users.find((u) => u.id === id)
+    if (user) Object.assign(user, data)
+    return user
+  },
   updateUserWallet: (id: string, wallet: number) => {
     const u = users.find((u) => u.id === id)
     if (u) u.wallet = Math.max(0, wallet)
@@ -329,4 +414,73 @@ export const db = {
     if (idx !== -1) favorites.splice(idx, 1)
   },
   getFavorites: (userId: string) => favorites.filter((f) => f.userId === userId).map((f) => f.restaurantId),
+
+  addRestaurantMembership: (membership: DbRestaurantMembership) => {
+    if (!memberships.some((m) => m.userId === membership.userId && m.restaurantId === membership.restaurantId)) {
+      memberships.push(membership)
+    }
+    return membership
+  },
+  removeRestaurantMembership: (userId: string, restaurantId: string) => {
+    const index = memberships.findIndex((m) => m.userId === userId && m.restaurantId === restaurantId)
+    if (index >= 0) memberships.splice(index, 1)
+  },
+  getRestaurantMemberships: (userId: string) => memberships.filter((m) => m.userId === userId),
+  canManageRestaurant: (userId: string, restaurantId: string) =>
+    db.getUserRole(userId) === "admin" || memberships.some((m) => m.userId === userId && m.restaurantId === restaurantId),
+
+  createNotification: (notification: DbNotification) => {
+    if (notification.eventKey && notifications.some((n) => n.userId === notification.userId && n.eventKey === notification.eventKey)) {
+      return notifications.find((n) => n.userId === notification.userId && n.eventKey === notification.eventKey)!
+    }
+    notifications.push(notification)
+    return notification
+  },
+  getNotificationsByUser: (userId: string) => notifications.filter((n) => n.userId === userId).slice().reverse(),
+  getUnreadNotificationCount: (userId: string) => notifications.filter((n) => n.userId === userId && !n.read).length,
+  markNotificationRead: (userId: string, id: string) => {
+    const notification = notifications.find((n) => n.id === id && n.userId === userId)
+    if (notification) notification.read = true
+    return notification
+  },
+  markAllNotificationsRead: (userId: string) => {
+    notifications.forEach((n) => {
+      if (n.userId === userId) n.read = true
+    })
+  },
+  getFailedNotifications: () => notifications.filter((n) => n.deliveryStatus === "failed").slice().reverse(),
+
+  createScheduledOrder: (order: DbScheduledOrder) => {
+    scheduledOrders.push(order)
+    return order
+  },
+  getScheduledOrdersByUser: (userId: string) => scheduledOrders.filter((o) => o.userId === userId).slice().reverse(),
+  getDueScheduledOrders: (now = Date.now()) => scheduledOrders.filter((o) => o.status === "scheduled" && new Date(o.scheduledFor).getTime() <= now),
+  updateScheduledOrder: (id: string, data: Partial<DbScheduledOrder>) => {
+    const order = scheduledOrders.find((o) => o.id === id)
+    if (order) Object.assign(order, data, { updatedAt: new Date().toISOString() })
+    return order
+  },
+
+  recordAnalyticsEvent: (event: DbAnalyticsEvent) => {
+    analyticsEvents.push(event)
+    return event
+  },
+  getAnalyticsEvents: () => analyticsEvents.slice().reverse(),
+  getAnalyticsSummary: () => ({
+    totalEvents: analyticsEvents.length,
+    searches: analyticsEvents.filter((e) => e.name === "search_submitted").length,
+    restaurantViews: analyticsEvents.filter((e) => e.name === "restaurant_viewed").length,
+    cartAdds: analyticsEvents.filter((e) => e.name === "cart_item_added").length,
+    confirmedOrders: orders.filter((o) => o.status !== "cancelled").length,
+    cancelledOrders: orders.filter((o) => o.status === "cancelled").length,
+    revenue: Math.round(orders.filter((o) => o.status !== "cancelled").reduce((sum, o) => sum + o.total, 0)),
+    scheduledOrders: scheduledOrders.length,
+    failedNotifications: notifications.filter((n) => n.deliveryStatus === "failed").length,
+  }),
+  createAuditLog: (log: DbAuditLog) => {
+    auditLogs.push(log)
+    return log
+  },
+  getAuditLogs: () => auditLogs.slice().reverse(),
 }

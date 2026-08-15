@@ -18,6 +18,12 @@ export async function GET(req: Request) {
       wallet: user.wallet,
       addresses,
       dietaryPreference: user.dietaryPreference,
+      role: user.role,
+      memberships: db.getRestaurantMemberships(user.id),
+      unreadNotifications: db.getUnreadNotificationCount(user.id),
+      notificationPreferences: user.notificationPreferences,
+      timezone: user.timezone,
+      personalizationOptOut: user.personalizationOptOut,
     },
   })
 }

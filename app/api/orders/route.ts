@@ -19,7 +19,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: validationError(parsed.error) }, { status: 400 })
     }
 
-    const { restaurantId, restaurantName, total, paymentMethod, deliveryAddress, items, tip, deliveryNote, idempotencyKey } = parsed.data
+    const { restaurantId, restaurantName, total, paymentMethod, deliveryAddress, items, tip, deliveryNote, couponCode, idempotencyKey } = parsed.data
     const restaurant = db.getRestaurantById(restaurantId)
     if (!restaurant) return NextResponse.json({ error: "Restaurant not found" }, { status: 404 })
 
@@ -43,6 +43,22 @@ export async function POST(req: Request) {
         image: dish.image,
       }
     })
+
+    const subtotal = persistedItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    const deliveryFee = subtotal >= 199 ? 0 : 25
+    const taxes = Math.round(subtotal * 0.05)
+    let discount = 0
+    if (couponCode) {
+      const offer = db.getOffers().find((item) => item.code.toUpperCase() === couponCode.toUpperCase())
+      if (!offer || (offer.validTill && new Date(`${offer.validTill}T23:59:59.999Z`).getTime() < Date.now()) || subtotal < offer.minOrder) {
+        return NextResponse.json({ error: "The applied coupon is no longer valid" }, { status: 409 })
+      }
+      discount = offer.discountPercent ? Math.min((subtotal * offer.discountPercent) / 100, offer.maxDiscount) : offer.maxDiscount
+    }
+    const expectedTotal = Math.max(subtotal + deliveryFee + taxes - discount + (tip || 0), 0)
+    if (Math.abs(expectedTotal - total) > 1) {
+      return NextResponse.json({ error: "Cart totals changed. Please review the updated total.", expectedTotal, subtotal, deliveryFee, taxes, discount }, { status: 409 })
+    }
 
     const user = db.getUserById(auth.userId)
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -81,6 +97,7 @@ export async function POST(req: Request) {
       },
       persistedItems.map((item) => ({ ...item, orderId })),
     )
+    db.createNotification({ id: `N-${Date.now()}-${Math.random()}`, userId: auth.userId, title: "Order placed successfully", message: `${restaurant.name} is preparing your order.`, type: "order", link: `/order/${orderId}`, eventKey: `order-created:${orderId}`, read: false, deliveryStatus: "in-app", createdAt: new Date().toISOString() })
     return NextResponse.json({ orderId })
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Order failed" }, { status: 400 })

@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, ShoppingCart, User, Heart, MapPin, Menu, X } from "lucide-react"
+import { Search, ShoppingCart, User, Heart, MapPin, Menu, X, CalendarClock, LayoutDashboard } from "lucide-react"
 import { useState } from "react"
 import { useStore } from "../store/useStore"
 import { Link, useNavigate } from "react-router-dom"
@@ -72,6 +72,9 @@ export function Navbar() {
                 >
                   <Heart className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" />
                 </Link>
+
+                <Link to="/scheduled-orders" className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Scheduled orders"><CalendarClock className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" /></Link>
+                {user?.role === "admin" && <Link to="/admin" className="p-2 hover:bg-secondary rounded-lg transition-colors" title="Admin dashboard"><LayoutDashboard className="w-5 h-5 text-foreground group-hover:text-primary transition-colors" /></Link>}
 
                 <Link
                   to="/cart"
@@ -174,6 +177,14 @@ export function Navbar() {
                   >
                     Orders
                   </Link>
+                  <Link
+                    to="/scheduled-orders"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block px-4 py-2 hover:bg-secondary rounded-lg transition-colors"
+                  >
+                    Scheduled orders
+                  </Link>
+                  {user?.role === "admin" && <Link to="/admin" onClick={() => setIsMobileMenuOpen(false)} className="block px-4 py-2 hover:bg-secondary rounded-lg transition-colors">Admin dashboard</Link>}
                   <Link
                     to="/profile"
                     onClick={() => setIsMobileMenuOpen(false)}

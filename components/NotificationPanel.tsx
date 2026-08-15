@@ -1,13 +1,34 @@
-import { useStore } from "../store/useStore";
 import { Bell, X, CheckCheck } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { api } from "../lib/api";
+import { useStore, type Notification as AppNotification } from "../store/useStore";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
 
 export function NotificationPanel() {
-  const { notifications, getUnreadCount, markNotificationAsRead, markAllNotificationsAsRead } = useStore();
+  const { user, notifications: localNotifications } = useStore();
+  const [notifications, setNotifications] = useState<AppNotification[]>(localNotifications);
   const [isOpen, setIsOpen] = useState(false);
-  const unreadCount = getUnreadCount();
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications(localNotifications);
+      return;
+    }
+    api.getNotifications().then((response) => {
+      if (Array.isArray(response?.notifications)) setNotifications(response.notifications);
+    }).catch(() => setNotifications(localNotifications));
+  }, [user, isOpen, localNotifications]);
+
+  const unreadCount = notifications.filter((notification) => !notification.read).length;
+  const markNotificationAsRead = async (id: string) => {
+    setNotifications((current) => current.map((notification) => notification.id === id ? { ...notification, read: true } : notification));
+    await api.markNotificationRead(id).catch(() => undefined);
+  };
+  const markAllNotificationsAsRead = async () => {
+    setNotifications((current) => current.map((notification) => ({ ...notification, read: true })));
+    await api.markAllNotificationsAsRead().catch(() => undefined);
+  };
   
   const getNotificationIcon = (type: string) => {
     switch (type) {

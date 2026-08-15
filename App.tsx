@@ -17,6 +17,8 @@ import { Favorites } from "./components/pages/Favorites"
 import { Offers } from "./components/pages/Offers"
 import { Addresses } from "./components/pages/Addresses"
 import { Settings } from "./components/pages/Settings"
+import { Admin } from "./components/pages/Admin"
+import { ScheduledOrders } from "./components/pages/ScheduledOrders"
 import { NotFound } from "./components/pages/NotFound"
 import { About } from "./components/pages/info/About"
 import { Careers } from "./components/pages/info/Careers"
@@ -37,15 +39,11 @@ import { useStore } from "./store/useStore"
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true)
-  const { isAuthenticated, user } = useStore()
+  const { hydrateSession } = useStore()
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken")
-    if (token && !isAuthenticated) {
-      // Try to validate token or fetch user data
-      console.log("[v0] Auth token found, initializing user session")
-    }
-  }, [isAuthenticated])
+    void hydrateSession()
+  }, [hydrateSession])
 
   return (
     <>
@@ -68,6 +66,8 @@ export default function App() {
               <Route path="/offers" element={<Offers />} />
               <Route path="/addresses" element={<Addresses />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/scheduled-orders" element={<ScheduledOrders />} />
               <Route path="/about" element={<About />} />
               <Route path="/careers" element={<Careers />} />
               <Route path="/team" element={<Team />} />

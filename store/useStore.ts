@@ -11,6 +11,11 @@ export interface User {
   addresses: Address[]
   dietaryPreference: "all" | "veg" | "non-veg"
   wallet: number
+  role: "user" | "admin" | "restaurant_manager"
+  memberships?: { userId: string; restaurantId: string; createdAt: string }[]
+  notificationPreferences?: { inApp: boolean; email: boolean; orderUpdates: boolean; promotions: boolean }
+  timezone?: string
+  personalizationOptOut?: boolean
 }
 
 export interface Address {
@@ -68,6 +73,7 @@ export interface Order {
   paymentMethod: string
   tip?: number
   deliveryNote?: string | null
+  couponCode?: string
   idempotencyKey?: string
   rating?: number
   review?: string
@@ -80,6 +86,7 @@ interface AppState {
   login: (email: string, password: string) => Promise<boolean>
   signup: (name: string, email: string, password: string, phone: string) => Promise<boolean>
   logout: () => void
+  hydrateSession: () => Promise<void>
   updateProfile: (data: Partial<User>) => void
   setDietaryPreference: (preference: "all" | "veg" | "non-veg") => void
   syncWallet: () => Promise<void>
@@ -167,7 +174,12 @@ export const useStore = create<AppState>()(
               phone: response.user.phone,
               addresses: response.user.addresses || [],
               dietaryPreference: response.user.dietaryPreference || "all",
-              wallet: response.user.wallet || 0,
+              wallet: response.user.wallet,
+              role: response.user.role || "user",
+              memberships: response.user.memberships || [],
+              notificationPreferences: response.user.notificationPreferences,
+              timezone: response.user.timezone,
+              personalizationOptOut: response.user.personalizationOptOut,
             },
             isAuthenticated: true,
           })
@@ -205,6 +217,11 @@ export const useStore = create<AppState>()(
               addresses: response.user.addresses || [],
               dietaryPreference: response.user.dietaryPreference || "all",
               wallet: response.user.wallet || 500,
+              role: response.user.role || "user",
+              memberships: response.user.memberships || [],
+              notificationPreferences: response.user.notificationPreferences,
+              timezone: response.user.timezone,
+              personalizationOptOut: response.user.personalizationOptOut,
             },
             isAuthenticated: true,
           })
@@ -229,6 +246,37 @@ export const useStore = create<AppState>()(
       logout: () => {
         localStorage.removeItem("authToken")
         set({ user: null, isAuthenticated: false, cart: [], favorites: [] })
+      },
+
+      hydrateSession: async () => {
+        if (typeof window === "undefined" || !localStorage.getItem("authToken")) return
+        try {
+          const current = await api.getCurrentUser()
+          if (!current) {
+            localStorage.removeItem("authToken")
+            return
+          }
+          set({
+            user: {
+              id: current.id,
+              name: current.name,
+              email: current.email,
+              phone: current.phone || "",
+              addresses: current.addresses || [],
+              dietaryPreference: current.dietaryPreference || "all",
+              wallet: current.wallet || 0,
+              role: current.role || "user",
+              memberships: current.memberships || [],
+              notificationPreferences: current.notificationPreferences,
+              timezone: current.timezone,
+              personalizationOptOut: current.personalizationOptOut,
+            },
+            isAuthenticated: true,
+          })
+        } catch {
+          localStorage.removeItem("authToken")
+          set({ user: null, isAuthenticated: false })
+        }
       },
 
       updateProfile: (data: Partial<User>) => {
@@ -269,6 +317,7 @@ export const useStore = create<AppState>()(
 
       // Cart actions
       addToCart: (item) => {
+        void api.trackEvent({ name: "cart_item_added", restaurantId: item.restaurantId, properties: { dishId: item.dishId, quantity: 1 } })
         const cart = get().cart
         const existingItem = cart.find((i) => i.dishId === item.dishId)
 
@@ -402,6 +451,9 @@ export const useStore = create<AppState>()(
             paymentMethod: order.paymentMethod,
             deliveryAddress: order.deliveryAddress,
             tip: order.tip,
+            deliveryNote: order.deliveryNote,
+            couponCode: order.couponCode,
+            idempotencyKey: order.idempotencyKey,
           })
 
           const orderId = response.orderId
@@ -416,6 +468,7 @@ export const useStore = create<AppState>()(
           set({ orders: [newOrder, ...get().orders] })
           get().clearCart()
 
+          void api.trackEvent({ name: "order_confirmed", restaurantId: order.restaurantId, properties: { paymentMethod: order.paymentMethod, total: order.total } })
           get().addNotification({
             title: "Order placed successfully!",
             message: `Order #${orderId} is being prepared`,

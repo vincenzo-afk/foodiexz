@@ -39,11 +39,15 @@ export function Home() {
   const [sortKey, setSortKey] = useState<SortKey>("recommended")
   const [activeChip, setActiveChip] = useState(0)
   const [isVegChip, setIsVegChip] = useState(false)
+  const [recommendations, setRecommendations] = useState<any[]>([])
 
   useEffect(() => {
     api.getRestaurants().then((data) => {
       setRestaurants(Array.isArray(data) ? data : [])
       setLoading(false)
+    })
+    api.getRecommendations().then((data) => {
+      setRecommendations(data?.sections?.recommended || [])
     })
   }, [])
 
@@ -191,6 +195,15 @@ export function Home() {
                     </div>
                   </Link>
                 ))}
+            </div>
+          </section>
+        )}
+
+        {recommendations.length > 0 && (
+          <section className="mb-10">
+            <div className="flex items-center justify-between mb-4"><div><h2 className="text-xl font-semibold">Picked for you</h2><p className="text-sm text-muted-foreground">Useful recommendations with a reason behind every pick.</p></div></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recommendations.slice(0, 3).map((restaurant: any) => <Link key={restaurant.id} to={`/restaurant/${restaurant.id}`} className="bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"><div className="flex gap-3"><img src={restaurant.image || "/placeholder.svg"} alt={restaurant.name} className="w-20 h-20 rounded-lg object-cover" /><div className="min-w-0"><p className="font-semibold truncate">{restaurant.name}</p><p className="text-xs text-muted-foreground mt-1">★ {restaurant.rating} · {restaurant.deliveryTime}</p><p className="text-xs text-primary mt-2 line-clamp-2">{restaurant.recommendationReasons?.[0]}</p></div></div></Link>)}
             </div>
           </section>
         )}

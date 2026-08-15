@@ -13,7 +13,11 @@ export async function GET(
   const { id } = await params
   const order = db.getOrderById(id)
   if (!order || order.userId !== auth.userId) return NextResponse.json({ error: "Order not found" }, { status: 404 })
+  const previousStatus = order.status
   db.advanceOrderStatus(order)
+  if (previousStatus !== order.status) {
+    db.createNotification({ id: `N-${Date.now()}-${Math.random()}`, userId: auth.userId, title: `Order #${order.id}`, message: order.status === "on-the-way" ? "Your order is on the way." : "Your order has been delivered.", type: order.status === "delivered" ? "success" : "order", link: `/order/${order.id}`, eventKey: `order-status:${order.id}:${order.status}`, read: false, deliveryStatus: "in-app", createdAt: new Date().toISOString() })
+  }
   return NextResponse.json({ id: order.id, status: order.status, createdAt: order.createdAt })
 }
 
@@ -49,6 +53,7 @@ export async function PUT(
       status: parsed.data.status,
       statusHistory: [...order.statusHistory, { status: parsed.data.status, at: Date.now() }],
     })
+    db.createNotification({ id: `N-${Date.now()}-${Math.random()}`, userId: auth.userId, title: `Order #${id}`, message: parsed.data.status === "cancelled" ? "Your order was cancelled." : "Your order status was updated.", type: parsed.data.status === "cancelled" ? "warning" : "order", link: `/order/${id}`, eventKey: `order-status:${id}:${parsed.data.status}`, read: false, deliveryStatus: "in-app", createdAt: new Date().toISOString() })
     return NextResponse.json({ success: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 })

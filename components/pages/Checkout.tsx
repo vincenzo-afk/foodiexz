@@ -110,6 +110,7 @@ export function Checkout() {
         deliveryAddress,
         tip: tip || undefined,
         deliveryNote: deliveryNote.trim() || undefined,
+        couponCode: appliedCode || undefined,
         idempotencyKey: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
       })
       setShowConfetti(true)

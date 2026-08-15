@@ -1,7 +1,7 @@
 "use client"
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
-import { ArrowLeft, Leaf, Shield, Bell, KeyRound, Wallet } from "lucide-react"
+import { ArrowLeft, Leaf, Shield, Bell, KeyRound, Wallet, Sparkles } from "lucide-react"
 import api from "../../lib/api"
 import { useStore } from "../../store/useStore"
 import { Button } from "../ui/button"
@@ -11,11 +11,14 @@ export function Settings() {
   const { user, isAuthenticated, updateProfile, setDietaryPreference, syncWallet } = useStore()
   const [dietary, setDietary] = useState<"all" | "veg" | "non-veg">("all")
   const [notifications, setNotifications] = useState(true)
+  const [personalized, setPersonalized] = useState(true)
   const [customAmount, setCustomAmount] = useState("")
   const [toppingUp, setToppingUp] = useState(false)
 
   useEffect(() => {
     if (user?.dietaryPreference) setDietary(user.dietaryPreference)
+    if (user?.notificationPreferences) setNotifications(user.notificationPreferences.inApp)
+    if (user?.personalizationOptOut !== undefined) setPersonalized(!user.personalizationOptOut)
   }, [user])
 
   if (!isAuthenticated || !user) {
@@ -111,9 +114,17 @@ export function Settings() {
               Receive updates about orders, offers, and more.
             </p>
             <button
-              onClick={() => {
-                setNotifications((v) => !v)
-                toast.success(notifications ? "Notifications turned off" : "Notifications turned on")
+              onClick={async () => {
+                const next = !notifications
+                setNotifications(next)
+                try {
+                  await api.updateNotificationPreferences({ inApp: next, orderUpdates: next, promotions: next })
+                  updateProfile({ notificationPreferences: { inApp: next, email: user.notificationPreferences?.email ?? false, orderUpdates: next, promotions: next } })
+                  toast.success(next ? "Notifications turned on" : "Notifications turned off")
+                } catch {
+                  setNotifications(!next)
+                  toast.error("Unable to save notification preferences")
+                }
               }}
               className={`w-11 h-6 rounded-full transition-colors relative ${
                 notifications ? "bg-green-500" : "bg-muted"
@@ -126,6 +137,12 @@ export function Settings() {
               />
             </button>
           </div>
+        </section>
+
+        {/* Personalization */}
+        <section className="bg-card border border-border rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3"><Sparkles className="w-5 h-5 text-primary" /><h2 className="font-bold">Personalized discovery</h2></div>
+          <div className="flex items-center justify-between gap-4"><p className="text-sm text-muted-foreground">Use your favorites and order history to improve restaurant recommendations.</p><button onClick={async () => { const next = !personalized; setPersonalized(next); try { await api.updateNotificationPreferences({ personalizationOptOut: !next }); updateProfile({ personalizationOptOut: !next }); } catch { setPersonalized(!next); toast.error("Unable to save personalization preference") } }} className={`w-11 h-6 rounded-full transition-colors relative ${personalized ? "bg-green-500" : "bg-muted"}`}><span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${personalized ? "translate-x-5" : "translate-x-0.5"}`} /></button></div>
         </section>
 
         {/* Security */}

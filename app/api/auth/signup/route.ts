@@ -12,6 +12,7 @@ export async function POST(req: Request) {
     }
     const { name, email, password, phone } = parsed.data
     const normalizedEmail = email.toLowerCase()
+    const role = process.env.ADMIN_EMAIL?.toLowerCase() === normalizedEmail ? "admin" : "user"
     if (db.getUserByEmail(normalizedEmail)) {
       return NextResponse.json({ error: "Email already registered" }, { status: 400 })
     }
@@ -26,11 +27,12 @@ export async function POST(req: Request) {
       dietaryPreference: "all",
       wallet: 500,
       createdAt: new Date().toISOString(),
+      role,
     })
     const token = signToken(userId)
     return NextResponse.json({
       token,
-      user: { id: userId, name, email: normalizedEmail, phone, wallet: 500, addresses: [], dietaryPreference: "all" },
+      user: { id: userId, name, email: normalizedEmail, phone, wallet: 500, addresses: [], dietaryPreference: "all", role, notificationPreferences: { inApp: true, email: false, orderUpdates: true, promotions: true }, timezone: "Asia/Kolkata", personalizationOptOut: false },
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Signup failed" }, { status: 400 })
