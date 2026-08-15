@@ -3,12 +3,12 @@ import { InfoPage } from "../../InfoPage"
 import { Link } from "react-router-dom"
 
 const members = [
-  { name: "Aryan Sharma", role: "Co-Founder & CEO", bio: "Former product lead at a top-3 delivery platform. Aryan believes the last mile is the entire game.", emoji: "👨‍💼" },
-  { name: "Priya Verma", role: "Co-Founder & CTO", bio: "Systems engineer who has scaled dispatch algorithms across three Indian metros. Builds what Aryan dreams up.", emoji: "👩‍💻" },
-  { name: "Rohan Mehta", role: "COO", bio: "Ex-operations at a national retail chain. Runs rider operations and keeps 98% of orders on time.", emoji: "🧑‍✈️" },
-  { name: "Sana Iyer", role: "Head of Design", bio: "Turned three food apps into award-winning products. Owns every pixel you see on FoodiezX.", emoji: "👩‍🎨" },
-  { name: "Kartik Nair", role: "Head of Restaurant Partnerships", bio: "Has signed over 400 restaurants. Knows every chef in Delhi personally.", emoji: "🤝" },
-  { name: "Meera Joshi", role: "Head of Customer Support", bio: "Runs a support team with a 4.9 satisfaction score and a 5-minute first response.", emoji: "🎧" },
+  {
+    name: "BHARANI KUMAR S",
+    role: "Founder & Head",
+    bio: "BHARANI KUMAR S is the founder and head of FoodiezX, guiding the product, engineering, and customer experience as an independent solo team.",
+    emoji: "BK",
+  },
 ]
 
 const values = [
@@ -21,9 +21,8 @@ export function Team() {
   return (
     <InfoPage title="Our Team" subtitle="Small team. Big appetite.">
       <p>
-        FoodiezX is run by a tight-knit crew of operators, engineers and food lovers. We come from
-        delivery platforms, retail chains and design studios — and we all share one obsession: making
-        your next meal better than the last.
+        FoodiezX is an independent project led by BHARANI KUMAR S. As a solo team, every product,
+        engineering, and design decision is driven by one goal: making your next meal better than the last.
       </p>
       <div className="grid sm:grid-cols-2 gap-4">
         {members.map((m) => (
@@ -52,7 +51,7 @@ export function Team() {
         ))}
       </div>
       <p>
-        We're hiring! See our <Link to="/careers">open roles</Link>.
+        Want to follow the project? See the <Link to="/careers">FoodiezX updates</Link>.
       </p>
     </InfoPage>
   )
