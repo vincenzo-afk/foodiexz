@@ -1,0 +1,10 @@
+foodiexz
+A full-stack food ordering experience.
+
+Discover restaurants and dishes across Indian, Chinese, Italian, Mexican, American, and Japanese cuisines.
+
+Checkout revalidates dish ownership, prices, coupons, delivery fees, taxes, tips, and wallet payments before creating an order.
+
+Live tracking exposes rider position, ETA, progress, and status history. Scheduled orders enforce a minimum 15-minute lead time and emit in-app notifications.
+
+Tech stack: Next.js 16.3.0, React 19.2.8, TypeScript, Tailwind CSS 4, Zustand, Zod, Vitest.

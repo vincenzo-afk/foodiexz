@@ -25,3 +25,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# nested editable video tooling
+/docs/video/**/node_modules/
+
+# local inspection artifacts
+/repo-facts.txt
+/routes.txt

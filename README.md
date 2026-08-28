@@ -1,628 +1,366 @@
 <div align="center">
 
 ```text
-███████╗ ██████╗  ██████╗ ██████╗ ██╗███████╗███████╗██╗  ██╗
-██╔════╝██╔═══██╗██╔═══██╗██╔══██╗██║╚══███╔╝██╔════╝╚██╗██╔╝
-█████╗  ██║   ██║██║   ██║██║  ██║██║  ███╔╝ █████╗   ╚███╔╝
-██╔══╝  ██║   ██║██║   ██║██║  ██║██║ ███╔╝  ██╔══╝   ██╔██╗
-██║     ╚██████╔╝╚██████╔╝██████╔╝██║███████╗███████╗██╔╝ ██╗
-╚═╝      ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝╚══════╝╚══════╝╚═╝  ╚═╝
+███████╗ ██████╗  ██████╗ ██████╗ ██╗███████╗██╗  ██╗
+██╔════╝██╔═══██╗██╔═══██╗██╔══██╗██║╚══███╔╝╚██╗██╔╝
+█████╗  ██║   ██║██║   ██║██║  ██║██║  ███╔╝  ╚███╔╝
+██╔══╝  ██║   ██║██║   ██║██║  ██║██║ ███╔╝   ██╔██╗
+██║     ╚██████╔╝╚██████╔╝██████╔╝██║███████╗██╔╝ ██╗
+╚═╝      ╚═════╝  ╚═════╝ ╚═════╝ ╚═╝╚══════╝╚═╝  ╚═╝
 ```
 
-# FoodiezX
+# foodiexz
 
-### A polished food-delivery experience for discovering restaurants, ordering meals, and tracking deliveries.
+**A full-stack food-ordering experience from discovery to delivery.**
 
-[![Build](https://img.shields.io/badge/build-local%20validation-informational?style=flat-square)](https://github.com/vincenzo-afk/foodiexz)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)](./package.json)
-[![License](https://img.shields.io/badge/license-not%20specified-lightgrey?style=flat-square)](#license)
-[![Coverage](https://img.shields.io/badge/coverage-not%20configured-lightgrey?style=flat-square)](#testing)
-[![Dependencies](https://img.shields.io/badge/dependencies-pnpm%20lockfile-informational?style=flat-square)](./pnpm-lock.yaml)
-[![GitHub stars](https://img.shields.io/github/stars/vincenzo-afk/foodiexz?style=flat-square)](https://github.com/vincenzo-afk/foodiexz/stargazers)
-[![Platform](https://img.shields.io/badge/platform-Next.js%20%7C%20React-black?style=flat-square)](https://nextjs.org/)
+[![CI](https://github.com/vincenzo-afk/foodiexz/actions/workflows/ci.yml/badge.svg)](https://github.com/vincenzo-afk/foodiexz/actions/workflows/ci.yml) [![Next.js](https://img.shields.io/badge/Next.js-16.3.0-030213?logo=next.js)](https://nextjs.org/) [![React](https://img.shields.io/badge/React-19.2.8-149eca?logo=react)](https://react.dev/) [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 
-[Live deployment](https://vercel.com/abnormal18use-9589s-projects/v0-project) · [Documentation](./BACKEND_SETUP.md) · [Report a bug](https://github.com/vincenzo-afk/foodiexz/issues/new?title=Bug%20report) · [Request a feature](https://github.com/vincenzo-afk/foodiexz/issues/new?title=Feature%20request)
+[Live deployment](https://foodiexz.vercel.app) · [Report a bug](https://github.com/vincenzo-afk/foodiexz/issues/new?template=bug_report.md) · [Request a feature](https://github.com/vincenzo-afk/foodiexz/issues/new?template=feature_request.md) · [Source code](https://github.com/vincenzo-afk/foodiexz)
 
 </div>
 
-> **Project status:** FoodiezX is an actively developed prototype with a functional Next.js application, Next Route Handlers, authenticated order flows, seeded restaurant data, wallet support, favorites, addresses, offers, and delivery tracking. Production deployment requires the hardening steps listed in [Known limitations](#known-limitations) and [Security](#security).
-
----
-
-## Table of Contents
+## <a name="table-of-contents"></a>Table of Contents
 
 - [About the Project](#about-the-project)
-  - [What FoodiezX Does](#what-foodiezx-does)
-  - [Key Features](#key-features)
-  - [Screenshots and Architecture](#screenshots-and-architecture)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Configuration](#configuration)
-  - [Running the Application](#running-the-application)
 - [Usage](#usage)
-  - [Typical Customer Flow](#typical-customer-flow)
-  - [Useful Commands](#useful-commands)
 - [API Reference](#api-reference)
-  - [Authentication](#authentication)
-  - [Restaurants and Search](#restaurants-and-search)
-  - [Offers](#offers)
-  - [Orders and Tracking](#orders-and-tracking)
-  - [Account Data](#account-data)
 - [Project Structure](#project-structure)
 - [Features and Roadmap](#features-and-roadmap)
-  - [Current Features](#current-features)
-  - [Roadmap](#roadmap)
-  - [Known Limitations](#known-limitations)
 - [Testing](#testing)
 - [Deployment](#deployment)
-  - [Vercel or Another Next.js Host](#vercel-or-another-nextjs-host)
-  - [Standalone Express Backend](#standalone-express-backend)
-  - [Docker, Kubernetes, and Self-Hosting](#docker-kubernetes-and-self-hosting)
 - [Contributing](#contributing)
 - [Security](#security)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
-- [References](#references)
 
 ---
 
-## About the Project
+## <a name="about-the-project"></a>About the Project
 
-### What FoodiezX Does
+foodiexz is a food-ordering web application that combines restaurant discovery, menu browsing, cart validation, authenticated checkout, delivery tracking, scheduled orders, wallet payments, reviews, notifications, and operational analytics in one product flow. The visible interface is mounted through `App.tsx` and the catch-all App Router page, while the primary backend surface is implemented with Next.js route handlers under `app/api/`.[^1] [^2]
 
-FoodiezX is a full-stack food-delivery prototype centered on a fast restaurant-discovery and ordering journey. The browser client is a Next.js application that mounts a client-side React Router shell through the catch-all route in [`app/[[...slug]]/page.tsx`](./app/[[...slug]]/page.tsx). Customers can browse seeded restaurants and dishes, filter and search the catalog, manage a cart, authenticate, save delivery addresses, apply offers, pay with supported demo methods, place orders, and follow a simulated rider on a map.
+The project currently uses a process-local data layer seeded from `lib/seedData.ts`. It is straightforward to run locally, but mutable data is not durable across server restarts or instance replacement. The repository also retains a separate Express/SQLite server path under `server/`, which should be treated as an alternate legacy runtime rather than a synchronized second backend.[^3]
 
-The current application uses Next.js Route Handlers under [`app/api`](./app/api) and the in-process data access layer in [`lib/db.ts`](./lib/db.ts). A separate Express + SQLite implementation remains in [`server/index.js`](./server/index.js) as a standalone backend path and migration reference; it is not started by the root `package.json` scripts. Treat the Next.js routes and `lib/db.ts` as the primary runtime when using the root application.
+### Key capabilities
 
-### Key Features
+- **Restaurant discovery:** browse restaurants, cuisines, dishes, search results, recommendations, favorites, and recently viewed items.
+- **Reliable checkout:** authenticate the customer, validate the cart with Zod schemas, recalculate prices and delivery charges on the server, reconcile coupons, support wallet payment, and honor idempotency keys.
+- **Delivery operations:** expose rider position, route distance, progress, estimated arrival, status history, scheduled-order cutoffs, and in-app notifications.
+- **Customer account features:** manage addresses, wallet balance, reviews, preferences, order history, and notification settings.
+- **Admin and analytics surfaces:** inspect overview metrics, users, audit events, recommendations, and analytics events.
 
-- **Restaurant discovery:** Browse six seeded restaurants spanning Indian, Chinese, Italian, Mexican, American, and Japanese cuisines.
-- **Catalog search:** Search restaurants and dishes by name, cuisine, and description, with rating, price, cuisine, and sort filters.
-- **Restaurant details:** View menus, dish metadata, vegetarian labels, ratings, bestseller labels, customizability, opening hours, and map coordinates.
-- **Cart and checkout:** Add items, adjust quantities, calculate tax and delivery fees, display multi-restaurant fee warnings, add delivery notes, and choose a rider tip.
-- **Offers and coupons:** Retrieve offers for an order total, calculate eligible discounts, and validate coupon codes such as `FOODIE50` and `FREEDEL` when present in the seed catalog.
-- **Authentication:** Sign up and log in with bcrypt-hashed passwords and JSON Web Tokens (JWTs).
-- **Account management:** Maintain a profile, dietary preference, saved addresses, default address, favorites, notifications, and recently viewed restaurants.
-- **Wallet:** Top up a demo wallet and use its balance for order payment, with a capped top-up amount of ₹10,000 per request.
-- **Order history:** View orders, item summaries, payment method, delivery address, rating, review, and status.
-- **Live delivery simulation:** Poll tracking data, render a Leaflet map, calculate rider position and estimated time of arrival (ETA), and advance orders from `preparing` to `on-the-way` to `delivered`.
-- **Responsive interface:** Use Tailwind CSS, Radix primitives, Lucide icons, Motion animations, toast notifications, dark-mode tokens, and accessible form components.
-- **Informational pages:** Include About, Careers, Team, Blog, Help, Contact, Partner, FAQ, Terms, Privacy, Refund, and Cookie pages.
+### Showcase video
 
-### Screenshots and Architecture
+The repository includes an editable HTML/GSAP composition and a rendered MP4 overview of the verified product flow. GitHub renders the player where repository-hosted video HTML is supported; the direct MP4 link and editable source remain available as fallbacks.
 
-No screenshots are currently committed to the repository. Run the application locally and capture screenshots from the routes listed in [`App.tsx`](./App.tsx) if visual documentation is required.
+<video controls width="100%" poster="docs/video/foodiexz-showcase/snapshots/frame-00-at-1.5s.png">
+  <source src="docs/video/foodiexz-showcase/renders/foodiexz-showcase.mp4" type="video/mp4">
+  Your browser does not support embedded video. [Open the foodiexz showcase MP4](docs/video/foodiexz-showcase/renders/foodiexz-showcase.mp4).
+</video>
 
-The runtime architecture is intentionally compact:
+[Open the editable HTML video source](docs/video/foodiexz-showcase/index.html) · [View the storyboard](docs/video/foodiexz-showcase/STORYBOARD.md) · [View the scene contact sheet](docs/video/foodiexz-showcase/snapshots/contact-sheet.jpg)
+
+### Architecture overview
 
 ```mermaid
 flowchart LR
-  Browser[Browser] --> Next[Next.js App Router]
-  Next --> Shell[Client React Router shell\nApp.tsx]
-  Shell --> Store[Persisted Zustand store\nstore/useStore.ts]
-  Store --> Client[API client\nlib/api.ts]
-  Client --> Routes[Next Route Handlers\napp/api/*]
-  Routes --> Auth[JWT auth\nlib/auth.ts]
-  Routes --> Data[In-process data layer\nlib/db.ts]
-  Data --> Seed[Seed catalog\nlib/seedData.ts]
-  Shell --> Maps[Leaflet + OpenStreetMap\nOSRM/Nominatim services]
-  Routes --> Analytics[Vercel Analytics]
-  Legacy[Standalone Express + SQLite\nserver/index.js] -. optional/legacy .-> Browser
+  Browser[React UI and Zustand store] --> Bridge[App Router catch-all page]
+  Bridge --> Routes[Next.js API route handlers]
+  Routes --> Auth[JWT auth and role guards]
+  Routes --> Validation[Zod request validation]
+  Routes --> Data[Process-local repository data]
+  Data --> Seed[Seed restaurants, dishes, offers]
+  Routes --> Tracking[Tracking and scheduled-order logic]
+  Routes --> Analytics[Analytics and audit events]
 ```
 
-The current route-handler data layer is process-local. New users, addresses, orders, favorites, and other mutable records live only for the lifetime of the running server instance. The standalone Express backend uses SQLite instead and should be treated as a separate deployment option rather than a second database automatically synchronized with the Next.js routes.
+---
+
+## <a name="tech-stack"></a>Tech Stack
+
+| Area | Technologies used in the repository |
+|---|---|
+| Frontend | React `19.2.8`, React Router, Zustand, Tailwind CSS `4.1.9`, Radix UI, Lucide React, Recharts, React Leaflet |
+| Backend | Next.js `16.3.0` App Router route handlers, TypeScript, JWT authentication, Zod `3.25.76` validation |
+| Data and storage | Process-local repository data in `lib/db.ts`, seeded catalog data in `lib/seedData.ts`, client persistence through Zustand middleware |
+| Legacy server path | `server/index.js` contains an Express-based server path with SQLite dependencies; the current frontend/API architecture is the Next.js path under `app/` |
+| Testing | Vitest `4.1.10`, TypeScript compiler checks, ESLint `9.39.5` |
+| Delivery and CI | GitHub Actions workflow in `.github/workflows/ci.yml`; the repository homepage is recorded as Vercel in GitHub metadata |
+
+Exact dependency declarations are maintained in [`package.json`](package.json), with the resolved package graph recorded in [`pnpm-lock.yaml`](pnpm-lock.yaml).[^4]
 
 ---
 
-## Tech Stack
-
-| Layer | Technologies | Repository evidence and purpose |
-|---|---|---|
-| Frontend | React `19.2.8`, Next.js `16.3.0`, TypeScript `^5`, React Router DOM, Zustand | The root manifest and [`App.tsx`](./App.tsx) define the client UI, routing shell, and state model. |
-| Styling | Tailwind CSS `4.x`, `tw-animate-css`, PostCSS, CSS custom properties | [`app/globals.css`](./app/globals.css) defines the theme tokens and Tailwind entry points. |
-| UI | Radix UI primitives, Lucide React, Sonner, Motion, React Hook Form, Zod | Component primitives and interaction libraries power dialogs, inputs, validation, icons, toasts, and animation. |
-| Maps and geospatial UX | Leaflet, React Leaflet, OpenStreetMap tiles, Nominatim reverse geocoding, OSRM routing | [`components/AddressMap.tsx`](./components/AddressMap.tsx) and [`lib/db.ts`](./lib/db.ts) implement address selection and simulated tracking. |
-| API layer | Next.js Route Handlers, `fetch`, JSON payloads | The current API is under [`app/api`](./app/api), with `/api` as the default browser base URL. |
-| Authentication | `jsonwebtoken`, `bcryptjs`, bearer tokens | [`lib/auth.ts`](./lib/auth.ts) signs and verifies 30-day JWTs; auth routes hash passwords. |
-| Primary persistence | In-process TypeScript data layer | [`lib/db.ts`](./lib/db.ts) seeds catalog data and stores mutable records in arrays for the life of the server instance. |
-| Alternate persistence | SQLite via `sqlite3` in Express backend | [`server/index.js`](./server/index.js) creates `server/foodiezx.db` and seeds a separate standalone API. |
-| Deployment and observability | Vercel-compatible Next.js build, `@vercel/analytics` | [`app/layout.tsx`](./app/layout.tsx) includes Vercel Analytics; no CI workflow is currently tracked. |
-| Package management | pnpm lockfile and workspace configuration | [`pnpm-lock.yaml`](./pnpm-lock.yaml) and [`pnpm-workspace.yaml`](./pnpm-workspace.yaml) pin the dependency graph and allow native package builds. |
-
----
-
-## Getting Started
+## <a name="getting-started"></a>Getting Started
 
 ### Prerequisites
 
-| Requirement | Minimum or expected version | Notes |
-|---|---:|---|
-| Node.js | 20 LTS or newer recommended | The repository uses Next.js 16, React 19, and TypeScript 5. |
-| pnpm | 9 or newer recommended | Use the lockfile for reproducible installs. npm can be used for the separate `server` package. |
-| Git | Any current version | Required to clone and contribute. |
-| Modern browser | Evergreen browser with JavaScript enabled | Leaflet map interactions require browser APIs. |
-
-No third-party API key is required for the seeded catalog or the demo authentication flow. Map tiles, reverse geocoding, and routing use public OpenStreetMap ecosystem endpoints and should be reviewed for usage limits before production traffic is introduced.
+Install Node.js 22 or newer and pnpm 11. The repository’s CI workflow uses those versions, installs with a frozen lockfile, and then runs type checking, linting, tests, and a production build.[^5]
 
 ### Installation
-
-Clone the repository and install the root dependencies:
 
 ```bash
 git clone https://github.com/vincenzo-afk/foodiexz.git
 cd foodiexz
-pnpm install
+pnpm install --frozen-lockfile
 ```
 
-If pnpm is not installed, enable it through Corepack or install it globally:
+### Environment configuration
 
-```bash
-corepack enable
-corepack prepare pnpm@latest --activate
-```
+Create `.env.local` only when you need to override the documented defaults. The current source reads the following variables.[^6]
 
-The root application does not require a database migration or a separate backend process for its current Next.js API routes. The catalog is loaded from [`lib/seedData.ts`](./lib/seedData.ts) when the server module is initialized.
+| Variable | Used by | Purpose and default |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | `lib/api.ts` | Browser API base URL; defaults to `/api`. |
+| `JWT_SECRET` | `lib/auth.ts`, legacy `server/index.js` | JWT signing and verification secret; the Next.js helper has a development fallback, so set a strong secret outside local development. |
+| `ADMIN_EMAIL` | `app/api/auth/signup/route.ts` | Signup email that receives the `admin` role. |
+| `CRON_SECRET` | `app/api/jobs/scheduled-orders/route.ts` | Secret used to authorize the scheduled-order job endpoint. |
+| `PORT` | legacy `server/index.js` | Express server port; defaults to `5000` when the legacy server is used. |
+| `CLIENT_URL` | legacy `server/index.js` | Express CORS origin; defaults to `http://localhost:5173`. |
 
-### Configuration
-
-Create `.env.local` in the repository root for the Next.js runtime. The file is ignored by Git through [`.gitignore`](./.gitignore).
+Example configuration:
 
 ```env
-# Optional: defaults to the same-origin Next.js Route Handlers.
 NEXT_PUBLIC_API_URL=/api
-# Optional: signups using this email receive the admin role.
+JWT_SECRET=replace-with-a-long-random-development-secret
 ADMIN_EMAIL=admin@example.com
-# Required for scheduled-order cron processing when using a deployment job.
-CRON_SECRET=replace-with-a-long-random-secret
-# Required for production. The code currently falls back to a development secret.
-JWT_SECRET=replace-with-a-long-random-secret
+CRON_SECRET=replace-with-a-cron-secret
 ```
 
-| Variable | Required | Default | Used by |
-|---|---|---|---|
-| `NEXT_PUBLIC_API_URL` | No | `/api` | [`lib/api.ts`](./lib/api.ts); set this only when the API is hosted at another origin. |
-| `JWT_SECRET` | Strongly recommended in production | `foodiezx-dev-secret` in the current code | [`lib/auth.ts`](./lib/auth.ts) for signing and verifying JWTs. |
-| `ADMIN_EMAIL` | No | Unset | [`app/api/auth/signup/route.ts`](./app/api/auth/signup/route.ts); matching signups receive the `admin` role. |
-| `CRON_SECRET` | Recommended when using scheduled jobs | Unset | [`app/api/jobs/scheduled-orders/route.ts`](./app/api/jobs/scheduled-orders/route.ts); protects scheduled-order processing. |
+Do not commit `.env`, `.env.local`, secrets, database files, or generated build output. The root [`.gitignore`](.gitignore) contains the current ignore rules.
 
-Do not commit real secrets, production tokens, or user data. The current root code intentionally provides a development fallback for `JWT_SECRET`; production deployments must override it.
-
-### Running the Application
-
-Start the Next.js development server:
+### Run the development server
 
 ```bash
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). The main client routes include `/`, `/search`, `/restaurant/:id`, `/cart`, `/checkout`, `/auth`, `/orders`, `/order/:id`, `/profile`, `/favorites`, `/offers`, `/addresses`, `/settings`, `/scheduled-orders`, and `/admin`. The informational routes are listed in [`App.tsx`](./App.tsx).
+The Next.js development server prints the local URL and port when it starts. Use `pnpm start` after creating a production build to run the compiled application.
 
-For a production-like local run:
+### Build and start production output
 
 ```bash
 pnpm build
 pnpm start
 ```
 
-The root scripts are defined in [`package.json`](./package.json): `dev`, `build`, `start`, `lint`, `typecheck`, and `test`.
+The repository does not include a Dockerfile or compose file. Containerization is therefore an integration task rather than an existing repository command.
 
 ---
 
-## Usage
+## <a name="usage"></a>Usage
 
-### Typical Customer Flow
+Open the application in a browser, choose a restaurant, browse dishes, add items to the cart, and proceed through the authenticated checkout flow. The client API wrapper in [`lib/api.ts`](lib/api.ts) groups browser calls for restaurants, dishes, orders, tracking, offers, wallet actions, addresses, notifications, scheduled orders, analytics, recommendations, admin operations, and favorites.[^7]
 
-1. Open the home page and browse the seeded restaurants.
-2. Use search, cuisine filters, rating filters, price range, or sorting to narrow the catalog.
-3. Open a restaurant, review its menu, and add dishes to the cart.
-4. Sign up or log in from `/auth` when an authenticated action is required.
-5. Select or create a saved delivery address, add a note or tip, apply an eligible offer, and choose a payment method.
-6. Place the order and open the tracking view to see status, ETA, route progress, and rider position.
-7. Review past orders from `/orders` and manage profile, wallet, addresses, favorites, and notification settings from the account pages.
-
-### Useful Commands
-
-| Command | Purpose |
-|---|---|
-| `pnpm install` | Install the root dependency graph from `pnpm-lock.yaml`. |
-| `pnpm dev` | Start the Next.js development server. |
-| `pnpm lint` | Run the repository’s ESLint configuration. |
-| `pnpm typecheck` | Run strict TypeScript validation. |
-| `pnpm test` | Run the Vitest unit-test suite. |
-| `pnpm build` | Create a production Next.js build. |
-| `pnpm start` | Serve the production build. |
-| `cd server && npm install` | Install dependencies for the separate Express + SQLite backend. |
-| `cd server && npm run dev` | Start the legacy/standalone backend with nodemon. |
-| `cd server && npm start` | Start the standalone backend with Node.js. |
-
-### Example: Sign Up and Place an Order
-
-The current API uses JSON request bodies and bearer authentication. A successful sign-up returns a JWT and a user object.
+Authenticated calls use a bearer token stored by the client session. A typical request against the local API looks like this:
 
 ```bash
-API_URL="http://localhost:3000/api"
-
-curl -sS -X POST "$API_URL/auth/signup" \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "name": "Demo Customer",
-    "email": "demo@example.com",
-    "password": "change-me-123",
-    "phone": "+91 90000 00000"
-  }'
+curl http://localhost:3000/api/restaurants
 ```
 
-Use the returned token for protected requests:
+A protected request supplies the bearer token returned by the login flow:
 
 ```bash
-TOKEN="paste-the-token-from-signup"
-
-curl -sS "$API_URL/restaurants" \
-  -H "Authorization: Bearer $TOKEN"
+curl http://localhost:3000/api/orders \
+  -H "Authorization: Bearer $FOODIEXZ_TOKEN"
 ```
 
-A complete order request must include a restaurant, total, payment method, delivery address, and item list:
-
-```bash
-curl -sS -X POST "$API_URL/orders" \
-  -H 'Content-Type: application/json' \
-  -H "Authorization: Bearer $TOKEN" \
-  -d '{
-    "restaurantId": "1",
-    "restaurantName": "Spice Junction",
-    "total": 359,
-    "paymentMethod": "cod",
-    "deliveryAddress": {
-      "address": "Block 42, Connaught Place, New Delhi",
-      "lat": 28.6304,
-      "lng": 77.2177
-    },
-    "items": [
-      {
-        "dishId": "d1",
-        "name": "Chicken Biryani",
-        "price": 299,
-        "quantity": 1,
-        "isVeg": false
-      }
-    ],
-    "tip": 20,
-    "deliveryNote": "Please call on arrival"
-  }'
-```
+The order handler recalculates the submitted cart against server-side dish and restaurant data before creating an order. It accepts an `Idempotency-Key` header for safe retries and returns a conflict when submitted totals no longer match the server calculation.[^8]
 
 ---
 
-## API Reference
+## <a name="api-reference"></a>API Reference
 
-The current API is implemented by Next.js Route Handlers under [`app/api`](./app/api). Unless `NEXT_PUBLIC_API_URL` is changed, use the same-origin prefix `/api`. Protected routes require `Authorization: Bearer <JWT>`.
+All endpoints are implemented as Next.js route handlers below `app/api/`. Protected endpoints use the bearer-token session established by the authentication routes. Request schemas and normalized validation errors are defined in [`lib/validation.ts`](lib/validation.ts).[^9]
 
-### Authentication
+<details>
+<summary>Authentication, catalog, discovery, and checkout</summary>
 
-| Method | Endpoint | Auth | Purpose |
-|---|---|---:|---|
-| `POST` | `/api/auth/signup` | No | Create an account, hash the password, seed a ₹500 wallet balance, and return a token. |
-| `POST` | `/api/auth/login` | No | Validate credentials and return a token plus user profile. |
-| `GET` | `/api/user` | Yes | Return the current user, role, memberships, addresses, wallet, dietary preference, notification metadata, and a refreshed token. |
-| `GET` | `/api/health` | No | Return `{ "status": "ok" }`. |
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/auth/signup` | Create a user account. |
+| `POST` | `/api/auth/login` | Authenticate a user and issue a session token. |
+| `GET` | `/api/user` | Return the authenticated user profile. |
+| `GET` | `/api/restaurants` | List restaurants. |
+| `GET` | `/api/restaurants/<id>` | Return a restaurant and its dishes. |
+| `GET` | `/api/restaurants/search` | Search restaurants. |
+| `GET` | `/api/dishes/<id>` | Return a dish. |
+| `GET` | `/api/dishes/search` | Search dishes. |
+| `GET` | `/api/recommendations` | Return ranked restaurant recommendations. |
+| `GET` | `/api/offers` | List active offers. |
+| `POST` | `/api/offers/validate` | Validate a coupon or offer payload. |
+| `POST` | `/api/cart/validate` | Validate cart contents before checkout. |
+| `POST` | `/api/orders` | Create an order after authentication and server-side total validation. |
+| `GET` | `/api/orders` | List the authenticated user’s orders. |
+| `GET` | `/api/orders/<id>` | Return an order detail. |
+| `GET` | `/api/orders/<id>/tracking` | Return tracking, route, ETA, progress, and status history. |
+| `POST` | `/api/orders/<id>/review` | Create or update an order review. |
+| `POST` | `/api/orders/<id>/status` | Transition order status. |
 
-Example login:
+</details>
 
-```bash
-curl -sS -X POST "http://localhost:3000/api/auth/login" \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"demo@example.com","password":"change-me-123"}'
-```
+<details>
+<summary>Customer account, wallet, notifications, and scheduling</summary>
 
-### Restaurants and Search
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` / `POST` | `/api/addresses` | List or create delivery addresses. |
+| `PUT` / `DELETE` | `/api/addresses/<id>` | Update or delete an address. |
+| `POST` | `/api/addresses/<id>/default` | Set an address as the default. |
+| `GET` / `POST` | `/api/favorites` | List or save favorite restaurants. |
+| `DELETE` | `/api/favorites/<restaurantId>` | Remove a favorite restaurant. |
+| `GET` / `POST` | `/api/notifications` | List or create in-app notifications. |
+| `PATCH` | `/api/notifications/<id>` | Update notification state. |
+| `GET` / `PUT` | `/api/notifications/preferences` | Read or update notification preferences. |
+| `GET` / `POST` | `/api/wallet` | Read wallet data or create a top-up. |
+| `GET` / `POST` | `/api/scheduled-orders` | List or create scheduled orders. |
+| `PATCH` / `DELETE` | `/api/scheduled-orders/<id>` | Update or cancel a scheduled order. |
+| `GET` | `/api/health` | Return an application health response. |
+| `POST` | `/api/contact` | Validate and submit a contact request. |
 
-| Method | Endpoint | Auth | Purpose |
-|---|---|---:|---|
-| `GET` | `/api/restaurants` | No | List restaurants with summary fields and menu items. |
-| `GET` | `/api/restaurants/:id` | No | Return one restaurant and its menu. |
-| `GET` | `/api/restaurants/search?q=...` | No | Search restaurant names, cuisines, and descriptions. |
-| `GET` | `/api/dishes/search?q=...` | No | Search dish names and descriptions. |
+</details>
 
-### Offers
+<details>
+<summary>Analytics, administration, and jobs</summary>
 
-| Method | Endpoint | Auth | Purpose |
-|---|---|---:|---|
-| `GET` | `/api/offers` | No | Return all offers. Pass `?total=500` to calculate eligibility and discount amount. |
-| `POST` | `/api/offers` | No | Validate a coupon with `{ "code": "FOODIE50", "orderTotal": 500 }`. |
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/api/analytics` | Record analytics events. |
+| `GET` | `/api/admin/overview` | Return administrative overview data. |
+| `GET` | `/api/admin/users` | List administrative user data. |
+| `PATCH` | `/api/admin/users/<id>/role` | Change a user role. |
+| `GET` | `/api/admin/audit` | Return audit records. |
+| `POST` | `/api/jobs/scheduled-orders` | Process scheduled-order work using `CRON_SECRET`. |
 
-A valid offer response includes `valid: true`, the calculated `discount`, and a human-readable `message`. Invalid codes and orders below the minimum return `valid: false`.
+</details>
 
-### Orders and Tracking
-
-| Method | Endpoint | Auth | Purpose |
-|---|---|---:|---|
-| `POST` | `/api/orders` | Yes | Validate the restaurant, catalog items, address, totals, and payment method; create an order and return its generated `orderId`. Wallet payments are debited only after validation succeeds, and `Idempotency-Key` prevents duplicate checkout submissions. |
-| `GET` | `/api/orders` | Yes | List the authenticated user’s orders with items, status, ETA, payment method, and delivery address. |
-| `GET` | `/api/orders/:id` | Yes | Return one order and its items if it belongs to the authenticated user. |
-| `DELETE` | `/api/orders/:id` | Yes | Cancel an eligible `preparing` order. Cancellation is rejected after the rider is on the way or the order is delivered. |
-| `POST` | `/api/orders/:id/review` | Yes | Add a rating and review to an owned order. |
-| `GET` | `/api/orders/:id/status` | Yes | Return the current order status. |
-| `PUT` | `/api/orders/:id/status` | Yes | Allow an authenticated customer to cancel their own `preparing` order; other status transitions are controlled by the server’s delivery simulation. |
-| `GET` | `/api/orders/:id/tracking` | Yes | Return status history, rider position, route, progress, distance, and ETA. |
-
-The tracking view polls the tracking endpoint every five seconds and uses Leaflet to display the delivery route. The route geometry is requested from OSRM when available, with a straight-line fallback in the data layer.
-
-### Account Data
-
-| Method | Endpoint | Auth | Purpose |
-|---|---|---:|---|
-| `GET` | `/api/addresses` | Yes | List the authenticated user’s saved addresses. |
-| `POST` | `/api/addresses` | Yes | Create a saved address. The first address becomes the default automatically. |
-| `PUT` | `/api/addresses` | Yes | Update an address using an `id` query parameter. |
-| `PUT` | `/api/addresses/:id` | Yes | Update an owned address. |
-| `DELETE` | `/api/addresses/:id` | Yes | Delete an owned address. |
-| `PUT` | `/api/addresses/:id/default` | Yes | Make an owned address the default. |
-| `GET` | `/api/favorites` | Yes | List favorite restaurants. |
-| `POST` | `/api/favorites/:restaurantId` | Yes | Add a restaurant to favorites. |
-| `DELETE` | `/api/favorites/:restaurantId` | Yes | Remove a restaurant from favorites. |
-| `GET` | `/api/wallet` | Yes | Return wallet balance and the latest wallet transactions. |
-| `POST` | `/api/wallet` | Yes | Top up the wallet; each request is capped at ₹10,000. |
-| `GET` | `/api/notifications` | Yes | List server-backed notifications and the unread count. |
-| `PUT` | `/api/notifications/:id` | Yes | Mark an owned notification as read. |
-| `POST` | `/api/notifications` | Yes | Mark all owned notifications as read. |
-| `PUT` | `/api/notifications/preferences` | Yes | Save in-app, email, order-update, promotion, timezone, and personalization preferences. |
-| `POST` | `/api/cart/validate` | No | Recalculate catalog prices, availability, fees, and cart changes before checkout. |
-| `GET` | `/api/recommendations` | Optional | Return deterministic, explainable discovery sections with anonymous fallbacks. |
-| `POST` | `/api/analytics` | Optional | Record a validated privacy-minimized funnel event. |
-| `GET` | `/api/scheduled-orders` | Yes | List the authenticated customer’s scheduled orders. |
-| `POST` | `/api/scheduled-orders` | Yes | Create a future order with cutoff and timezone metadata. |
-| `PUT`/`DELETE` | `/api/scheduled-orders/:id` | Yes | Reschedule or cancel an owned scheduled order before its cutoff. |
-| `POST` | `/api/jobs/scheduled-orders` | Admin or cron secret | Revalidate and process due scheduled orders idempotently. |
-| `GET` | `/api/admin/overview` | Admin | Return operational metrics, active orders, failed notifications, and audit activity. |
-| `GET` | `/api/admin/users` | Admin | List users without password fields. |
-| `PUT` | `/api/admin/users/:id/role` | Admin | Assign `user`, `restaurant_manager`, or `admin` roles. |
-| `GET` | `/api/admin/audit` | Admin | List role-change audit records. |
-| `POST` | `/api/contact` | No | Accept a contact message in the demo in-memory inbox. |
-
-Protected routes return `401` for a missing or invalid token. Typical validation failures return `400`, missing resources return `404`, insufficient wallet balance returns `402`, and invalid order state transitions can return `409`.
+The repository does not include an OpenAPI document. For exact payload fields, read the route handler and its schema together; the most security-sensitive checkout behavior is implemented in [`app/api/orders/route.ts`](app/api/orders/route.ts).[^8]
 
 ---
 
-## Project Structure
+## <a name="project-structure"></a>Project Structure
 
 ```text
 foodiexz/
 ├── app/
-│   ├── [[...slug]]/page.tsx       # Catch-all entry that mounts the client app
-│   ├── api/                       # Current Next.js Route Handlers
-│   ├── globals.css                # Tailwind entry and theme variables
-│   ├── layout.tsx                 # Metadata, fonts, analytics, root layout
-│   └── not-found.tsx              # App-router fallback page
-├── components/
-│   ├── pages/                     # Customer and informational screens
-│   ├── ui/                        # Reusable Radix/Tailwind primitives
-│   ├── AddressMap.tsx             # Leaflet address picker
-│   ├── Map.tsx                    # Delivery map and route rendering
-│   ├── Navbar.tsx                 # Global navigation
-│   ├── Footer.tsx                 # Global footer
-│   ├── DishCard.tsx               # Menu item card and cart actions
-│   ├── RestaurantCard.tsx         # Restaurant summary card
-│   ├── OrderTracking.tsx          # Tracking-related UI dependencies
-│   └── SplashScreen.tsx            # Initial loading experience
+│   ├── [[...slug]]/page.tsx       # Catch-all page that mounts App.tsx
+│   └── api/                       # Next.js route handlers
+├── components/                    # Reusable UI and Radix-based components
 ├── lib/
-│   ├── api.ts                     # Browser API client
-│   ├── auth.ts                    # JWT signing, verification, and guards
-│   ├── db.ts                      # Current in-process data layer and tracking helpers
+│   ├── api.ts                     # Browser API wrapper
+│   ├── auth.ts                    # JWT and role guards
+│   ├── db.ts                      # Process-local repository and tracking logic
 │   ├── seedData.ts                # Restaurants, dishes, and offers
-│   └── utils.ts                   # Shared class-name utility
-├── store/useStore.ts              # Persisted Zustand state and business logic
-├── server/
-│   ├── index.js                   # Standalone Express + SQLite backend
-│   └── package.json               # Backend-only scripts and dependencies
-├── public/                        # Icons, logos, and fallback assets
-├── App.tsx                        # BrowserRouter route map and app shell
-├── package.json                   # Root scripts and dependencies
-├── pnpm-lock.yaml                 # Locked root dependency graph
-├── next.config.mjs                # Next.js build and image configuration
-├── components.json                # shadcn/ui aliases and styling metadata
-├── BACKEND_SETUP.md                # Standalone backend setup notes
-├── README_API_MIGRATION.md         # Earlier API migration notes
-└── Attributions.md                 # shadcn/ui and Unsplash attributions
+│   └── validation.ts              # Zod request schemas
+├── public/                        # Icons, logos, and static assets
+├── server/                        # Legacy Express/SQLite server path
+├── store/useStore.ts              # Persisted Zustand client store
+├── styles/globals.css             # Tailwind and application design tokens
+├── App.tsx                        # Main client application shell
+├── package.json                   # Scripts and dependencies
+├── pnpm-lock.yaml                 # Resolved dependency graph
+└── .github/workflows/ci.yml       # CI: typecheck, lint, test, build
 ```
 
----
-
-## Features and Roadmap
-
-### Current Features
-
-- [x] Seeded restaurant and dish catalog.
-- [x] Restaurant and dish search.
-- [x] Rating, cuisine, price, and sort filters.
-- [x] Cart quantity management and multi-restaurant fee warning.
-- [x] Checkout with saved addresses, delivery notes, tips, offers, and demo payment methods.
-- [x] JWT authentication with bcrypt password hashing.
-- [x] Favorites and recently viewed restaurants.
-- [x] Wallet top-ups and wallet payment validation.
-- [x] Orders, cancellation rules, reviews, notifications, and order history.
-- [x] Simulated delivery tracking with Leaflet, ETA, status history, and OSRM route lookup.
-- [x] Expiry-aware offers and coupon validation with clear eligibility feedback.
-- [x] Idempotent checkout requests, server-side catalog validation, current-price reorder checks, coupon reconciliation, and cart validation snapshots.
-- [x] Role-aware admin dashboard with server-side role guards, user role management, audit logs, operational metrics, and funnel counters.
-- [x] Server-backed in-app notifications with unread counts, read actions, order-state events, preference controls, and deduplication keys.
-- [x] Scheduled orders with cutoff windows, timezone metadata, cancellation, rescheduling, cron-compatible processing, and menu/price revalidation.
-- [x] Deterministic explainable recommendations, personalized discovery controls, and privacy-minimized search, view, cart, and order analytics.
-- [x] Responsive theme tokens, dark-mode styles, accessible UI primitives, and toast feedback.
-- [x] Vercel Analytics integration in the root layout.
-
-### Roadmap
-
-The next production milestones are:
-
-1. Move `lib/db.ts` to a durable transactional database with migrations, repository helpers, and wallet/order reconciliation.
-2. Add a real payment provider, webhook verification, refunds, and persistent checkout reservations.
-3. Add email/push provider adapters behind the existing notification event and retry contracts.
-4. Add restaurant-manager membership CRUD, menu availability controls, delivery zones, and operational order controls.
-5. Expand route and browser coverage, accessibility automation, dependency review, and smoke deployment checks.
-6. Add durable contact-message handling, retention policies, analytics aggregation, export controls, and feature-flagged rollouts.
-
-### Known Limitations
-
-- The current Next.js data layer is still in memory. A restart or serverless instance replacement loses users, addresses, orders, favorites, reviews, wallet history, notifications, scheduled orders, audit logs, and analytics events. The new feature contracts are ready for a durable repository migration, but they are not production-grade persistence yet.
-- The contact endpoint stores messages in an in-memory array and is therefore not a durable support inbox.
-- The wallet transaction log is also process-local; wallet balance changes should not be treated as production-grade accounting.
-- `JWT_SECRET` has a development fallback in the current code. Production deployments must override it with a high-entropy secret.
-- Public OpenStreetMap, Nominatim, and OSRM services are used without application-owned rate limiting or a commercial service agreement.
-- The repository contains a standalone Express + SQLite backend alongside the current Next.js Route Handlers. They have different persistence behavior and should not be run as if they share state.
-- Automated coverage currently focuses on validation, tracking, notification deduplication, scheduled-order due selection, and order idempotency; route and browser coverage still needs to grow.
-- A CI quality workflow is tracked at [`.github/workflows/ci.yml`](./.github/workflows/ci.yml), but browser tests, deployment smoke tests, and coverage reporting are not yet configured.
-
-[Changelog and repository history](https://github.com/vincenzo-afk/foodiexz/commits/main) · [Open issues](https://github.com/vincenzo-afk/foodiexz/issues)
+The abbreviated tree focuses on the application entry point, domain logic, API surface, and operational configuration. Reusable UI primitives under `components/ui/` are implementation details of the interface layer.
 
 ---
 
-## Testing
+## <a name="features-and-roadmap"></a>Features and Roadmap
 
-The repository now exposes lint, type-check, test, and build scripts.
+### Implemented
+
+| Status | Area | Evidence |
+|---|---|---|
+| ✅ | Restaurant and dish discovery | Restaurant, dish, search, offer, and recommendation routes plus the client API wrapper |
+| ✅ | Authenticated checkout | Order creation route, JWT guards, Zod validation, server-side total reconciliation, wallet handling, idempotency |
+| ✅ | Order history and reviews | Order detail, order list, review, and status routes |
+| ✅ | Live delivery tracking | Tracking route and geospatial helpers in `lib/db.ts` |
+| ✅ | Scheduled orders | Scheduling route, lead-time validation, cutoff timestamps, and job route |
+| ✅ | Customer operations | Addresses, favorites, notifications, preferences, wallet, analytics, and audit data |
+| ✅ | Automated quality checks | GitHub Actions workflow with typecheck, lint, Vitest, and production build |
+
+### Known limitations and next priorities
+
+The current repository uses process-local server data and has no committed license or deployment manifest. It also retains a legacy Express/SQLite path beside the primary Next.js architecture. A production roadmap should therefore prioritize durable database storage, explicit deployment configuration, a published license, and a stable API contract before adding more surface area.
+
+For change history, use the repository’s [commit log](https://github.com/vincenzo-afk/foodiexz/commits/main) and [releases page](https://github.com/vincenzo-afk/foodiexz/releases).
+
+---
+
+## <a name="testing"></a>Testing
+
+Run the checks locally with the same commands used by the CI workflow:
 
 ```bash
-pnpm install --frozen-lockfile
-pnpm lint
 pnpm typecheck
+pnpm lint
 pnpm test
 pnpm build
 ```
 
-The current automated suite covers validation schemas, tracking math, future-timestamp clamping, user-scoped order idempotency, notification deduplication, and scheduled-order due selection. Browser-level regression tests and coverage reporting are not yet configured. The release smoke test should additionally verify authentication, cart price reconciliation, checkout recovery, role-restricted admin access, notification read state, scheduled-order creation/processing, recommendation opt-out, analytics permissions, address management, coupon expiry, wallet top-up, cancellation, review eligibility, and protected tracking access.
+The test suite uses Vitest and includes database and validation tests. CI runs on pushes and pull requests targeting `main`, installs with `pnpm install --frozen-lockfile`, and executes type checking, linting, unit tests, and a production build in one quality job.[^5]
+
+The editable showcase composition is independently validated with HyperFrames and rendered to an 18-second MP4. Its project files live under [`docs/video/foodiexz-showcase/`](docs/video/foodiexz-showcase/).
 
 ---
 
-## Deployment
+## <a name="deployment"></a>Deployment
 
-### Vercel or Another Next.js Host
+GitHub metadata records the live homepage as [foodiexz.vercel.app](https://foodiexz.vercel.app). The repository contains no Vercel project file, Dockerfile, or compose manifest, so deployment settings should be configured in the hosting platform rather than inferred from source files.
 
-The root app is structured for a standard Next.js deployment:
-
-```bash
-pnpm install --frozen-lockfile
-pnpm build
-pnpm start
-```
-
-For Vercel:
-
-1. Import `https://github.com/vincenzo-afk/foodiexz` into a Vercel project.
-2. Select the detected Next.js framework preset.
-3. Set `JWT_SECRET` to a strong production secret.
-4. Leave `NEXT_PUBLIC_API_URL` unset or set it to `/api` when using same-origin Route Handlers.
-5. Deploy and verify `/api/health`, sign-up, restaurant browsing, checkout, and tracking.
-
-The current in-process persistence model is not suitable for reliable multi-instance production deployment. Add a shared database and durable storage before treating a Vercel deployment as production-ready.
-
-### Standalone Express Backend
-
-The repository also contains an older standalone backend with SQLite. Use it only when you deliberately want that separate architecture:
-
-```bash
-cd server
-npm install
-cat > .env <<'EOF'
-PORT=5000
-JWT_SECRET=replace-with-a-long-random-secret
-CLIENT_URL=http://localhost:3000
-EOF
-npm start
-```
-
-The backend listens on `http://localhost:5000` by default and writes its SQLite database to `server/foodiezx.db`. Its historical setup notes are in [`BACKEND_SETUP.md`](./BACKEND_SETUP.md). The root Next.js client defaults to `/api`, so connecting it to this standalone backend requires an explicit API proxy or a compatible `NEXT_PUBLIC_API_URL` configuration and careful endpoint compatibility testing.
-
-### Docker, Kubernetes, and Self-Hosting
-
-No `Dockerfile`, Docker Compose file, or Kubernetes manifests are currently tracked. For a self-hosted Next.js deployment, build the root application on a Node.js host and run `pnpm start` behind a reverse proxy with HTTPS. For container or Kubernetes deployment, add a non-root image, health check for `/api/health`, environment injection for `JWT_SECRET`, durable database storage, structured logs, and a shared session/data strategy before exposing the service publicly.
+For a Next.js deployment, install dependencies with the frozen lockfile, run `pnpm build`, and start the result with `pnpm start`. Configure `JWT_SECRET`, `ADMIN_EMAIL`, and `CRON_SECRET` in the deployment environment, and set `NEXT_PUBLIC_API_URL` only when the API is served from a different base path. Because the current data layer is process-local, a multi-instance deployment should not be treated as durable persistence without a database migration.
 
 ---
 
-## Contributing
+## <a name="contributing"></a>Contributing
 
-Contributions are welcome through GitHub pull requests.
+Create a focused branch from `main`, keep changes scoped to one concern, and run type checking, linting, tests, and the production build before opening a pull request. Pull requests should describe the behavior changed, include the verification commands that passed, and call out any API, security, data-model, or deployment impact.
 
-1. Fork the repository and create a focused branch from `main`.
-2. Use a descriptive branch name such as `feat/search-filters`, `fix/order-cancellation`, or `docs/readme`.
-3. Install dependencies with `pnpm install` and run `pnpm lint` before committing.
-4. Keep UI changes, API changes, and data-model changes logically separated.
-5. Update the relevant documentation when behavior, environment variables, or endpoints change.
-6. Open a pull request with a clear summary, testing notes, screenshots for visual changes, and any migration or deployment considerations.
-
-Use conventional-style commit messages such as `feat: add restaurant sorting`, `fix: protect order lookup`, `docs: clarify local setup`, or `chore: refresh dependencies`. No `CONTRIBUTING.md`, code of conduct, or pull request template is currently tracked; until those files are added, the workflow above is the project convention.
+Use clear, imperative commit messages such as `feat: add scheduled order reminders` or `fix: reject stale checkout totals`. Do not commit secrets, generated build output, local databases, or unrelated editor files. The detailed contribution workflow is documented in [`CONTRIBUTING.md`](CONTRIBUTING.md), and pull requests use [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md).
 
 ---
 
-## Security
+## <a name="security"></a>Security
 
-FoodiezX includes bcrypt password hashing, JWT verification, ownership checks for authenticated resources, validated request bodies, protected order status/tracking endpoints, catalog-backed order items, and idempotent checkout requests. These are useful foundations, not a complete production security program.
+The application uses JWT authentication and role guards, Zod input validation, server-side order total recalculation, coupon reconciliation, idempotency-key handling, and a secret-protected scheduled-order job route.[^6] [^8] These controls are application behaviors, not a substitute for production secret management or durable infrastructure.
 
-Before production use:
+Do not use the development JWT fallback in production. Report a suspected vulnerability privately through the repository owner’s [GitHub security page](https://github.com/vincenzo-afk/foodiexz/security), if enabled, or contact the maintainer through the repository profile. Do not disclose exploitable details in a public issue.
 
-- Replace all development JWT fallbacks with a secret supplied through a protected environment manager.
-- Add request-body schemas, input length limits, rate limiting, CSRF protection where applicable, and abuse monitoring.
-- Add security headers, HTTPS, strict CORS, secure cookie or token storage strategy, and dependency vulnerability scanning.
-- Use a durable database with least-privilege credentials, backups, migrations, and transactional order and wallet operations.
-- Do not use the demo wallet as a real financial ledger or connect the demo payment methods to real funds without a reviewed payment integration.
-- Report suspected vulnerabilities privately through the repository owner’s [GitHub profile](https://github.com/vincenzo-afk) rather than posting exploit details publicly in an issue.
-
-No `SECURITY.md` policy or automated dependency-scanning workflow is currently tracked.
+The repository’s vulnerability-reporting process is documented in [`SECURITY.md`](SECURITY.md). No response-time or supported-version promise is made here, and no Dependabot configuration is currently tracked.
 
 ---
 
-## License
+## <a name="license"></a>License
 
-No `LICENSE` file is currently present in the repository, so no open-source license has been declared. Until the project owner adds a license, assume that the code is not licensed for reuse beyond permissions granted by applicable law or the repository owner. See the [repository license settings](https://github.com/vincenzo-afk/foodiexz) for the current project state.
-
----
-
-## Acknowledgments
-
-- [Next.js](https://nextjs.org/) and [React](https://react.dev/) for the application runtime.
-- [Tailwind CSS](https://tailwindcss.com/), [Radix UI](https://www.radix-ui.com/), [Lucide](https://lucide.dev/), [Motion](https://motion.dev/), and [Sonner](https://sonner.emilkowal.ski/) for the interface system.
-- [Leaflet](https://leafletjs.com/), [OpenStreetMap](https://www.openstreetmap.org/), [Nominatim](https://nominatim.org/), and [OSRM](https://project-osrm.org/) for map and routing capabilities.
-- [shadcn/ui](https://ui.shadcn.com/) components, attributed in [`Attributions.md`](./Attributions.md).
-- [Unsplash](https://unsplash.com/) imagery, attributed in [`Attributions.md`](./Attributions.md).
-- The FoodiezX contributors and the repository owner, [vincenzo-afk](https://github.com/vincenzo-afk).
+No `LICENSE` file is currently present in the repository. Until the owner adds a license, the code should be treated as **all rights reserved** and should not be redistributed under an assumed open-source license.
 
 ---
 
-## References
+## <a name="acknowledgments"></a>Acknowledgments
 
-The README is grounded in the repository’s source and configuration files:
+The project uses open-source libraries including Next.js, React, TypeScript, Tailwind CSS, Radix UI, Zustand, Zod, Vitest, Leaflet, Recharts, and Lucide React. The repository also records UI and image attributions in [`Attributions.md`](Attributions.md).
 
-1. [Root package manifest](./package.json)
-2. [Application shell and route map](./App.tsx)
-3. [Current Next.js API routes](./app/api)
-4. [Frontend API client](./lib/api.ts)
-5. [JWT authentication helpers](./lib/auth.ts)
-6. [Current in-process data layer](./lib/db.ts)
-7. [Seed catalog](./lib/seedData.ts)
-8. [Persisted Zustand store](./store/useStore.ts)
-9. [Standalone Express backend](./server/index.js)
-10. [Backend setup guide](./BACKEND_SETUP.md)
-11. [API migration notes](./README_API_MIGRATION.md)
-12. [Attributions](./Attributions.md)
+The current GitHub contributor is **vincenzo-afk**, the owner of [github.com/vincenzo-afk/foodiexz](https://github.com/vincenzo-afk/foodiexz).
 
 ---
 
-<p align="center">
-  <a href="#foodiezx">Back to top</a>
-  <br />
-  Built with care by <a href="https://github.com/vincenzo-afk">BHARANI KUMAR S</a> and the FoodiezX contributors.
-</p>
+## <a name="references"></a>References
 
-[license]: #license
-[1]: ./package.json
-[2]: ./App.tsx
-[3]: ./app/api
-[4]: ./lib/api.ts
-[5]: ./lib/auth.ts
-[6]: ./lib/db.ts
-[7]: ./lib/seedData.ts
-[8]: ./store/useStore.ts
-[9]: ./server/index.js
-[10]: ./BACKEND_SETUP.md
-[11]: ./README_API_MIGRATION.md
-[12]: ./Attributions.md
+[^1]: [Application entry point](https://github.com/vincenzo-afk/foodiexz/blob/main/App.tsx) and [catch-all App Router page](https://github.com/vincenzo-afk/foodiexz/blob/main/app/%5B%5B...slug%5D%5D/page.tsx)
+[^2]: [Next.js API route handlers](https://github.com/vincenzo-afk/foodiexz/tree/main/app/api)
+[^3]: [Repository data layer](https://github.com/vincenzo-afk/foodiexz/blob/main/lib/db.ts) and [seed data](https://github.com/vincenzo-afk/foodiexz/blob/main/lib/seedData.ts)
+[^4]: [Package manifest](https://github.com/vincenzo-afk/foodiexz/blob/main/package.json) and [resolved dependency lockfile](https://github.com/vincenzo-afk/foodiexz/blob/main/pnpm-lock.yaml)
+[^5]: [Continuous integration workflow](https://github.com/vincenzo-afk/foodiexz/blob/main/.github/workflows/ci.yml)
+[^6]: [Authentication helpers](https://github.com/vincenzo-afk/foodiexz/blob/main/lib/auth.ts) and [validation schemas](https://github.com/vincenzo-afk/foodiexz/blob/main/lib/validation.ts)
+[^7]: [Client API wrapper](https://github.com/vincenzo-afk/foodiexz/blob/main/lib/api.ts)
+[^8]: [Order route handler](https://github.com/vincenzo-afk/foodiexz/blob/main/app/api/orders/route.ts)
+[^9]: [API route inventory](https://github.com/vincenzo-afk/foodiexz/tree/main/app/api)
+
+---
+
+<p align="center"><a href="#foodiexz">Back to top</a></p>
+
+<p align="center">Built with care by <a href="https://github.com/vincenzo-afk">vincenzo-afk</a>.</p>

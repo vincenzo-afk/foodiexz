@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>foodiexz showcase</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root {
+        --canvas: #fffaf5;
+        --ink: #030213;
+        --orange: #f97316;
+        --orange-soft: #ffedd5;
+        --muted: #6b7280;
+        --line: rgba(3, 2, 19, 0.14);
+        --white: #ffffff;
+      }
+
+      * { box-sizing: border-box; }
+      @font-face { font-family: "SFMono-Regular"; src: local("SFMono-Regular"), local("SF Mono"); }
+      html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; }
+      body { background: var(--canvas); color: var(--ink); font-family: Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; }
+      #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+      .clip { position: absolute; inset: 0; overflow: hidden; }
+      .ground { position: absolute; inset: 0; background: var(--canvas); }
+      .wash { position: absolute; width: 900px; height: 900px; border-radius: 50%; background: radial-gradient(circle, rgba(249,115,22,.19) 0%, rgba(249,115,22,0) 70%); filter: blur(2px); }
+      .wash-a { right: -180px; top: -250px; }
+      .wash-b { left: -320px; bottom: -380px; opacity: .58; }
+      .grain { position: absolute; inset: 0; opacity: .16; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.78' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E"); mix-blend-mode: multiply; pointer-events: none; }
+      .topline { position: absolute; left: 116px; right: 116px; top: 92px; height: 2px; background: var(--line); transform-origin: left center; }
+      .eyebrow { font-size: 22px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+      .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; letter-spacing: .05em; }
+      .wordmark { display: block; margin-top: 28px; font-size: 94px; line-height: .95; font-weight: 850; letter-spacing: -.075em; }
+      .headline { display: block; margin-top: 28px; font-size: 104px; line-height: .94; letter-spacing: -.065em; font-weight: 820; max-width: 900px; }
+      .subhead { font-size: 31px; line-height: 1.28; color: var(--muted); max-width: 630px; }
+      .footerline { position: absolute; left: 116px; right: 116px; bottom: 84px; display: flex; justify-content: space-between; align-items: center; font-size: 20px; color: #4b5563; }
+      .orange { color: #c2410c; }
+      .panel { position: absolute; background: rgba(255,255,255,.92); border: 2px solid rgba(3,2,19,.12); border-radius: 30px; box-shadow: 0 28px 70px rgba(103,58,24,.13); }
+      .panel-title { font-size: 22px; font-weight: 800; letter-spacing: .02em; }
+      .small { font-size: 20px; color: #4b5563; }
+      .chip { display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border-radius: 999px; background: var(--orange-soft); color: #9a3412; font-weight: 750; font-size: 20px; }
+      .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--orange); display: inline-block; }
+      .scene-index { position: absolute; right: 116px; top: 126px; font-size: 19px; color: #4b5563; }
+
+      /* Scene 1 */
+      #s1-left { position: absolute; left: 116px; top: 220px; }
+      #s1-route { position: absolute; right: 170px; top: 300px; width: 630px; height: 310px; border: 3px solid rgba(249,115,22,.32); border-radius: 50%; transform: rotate(-12deg); }
+      #s1-route::before, #s1-route::after { content: ""; position: absolute; width: 26px; height: 26px; border: 7px solid var(--orange); border-radius: 50%; background: var(--canvas); }
+      #s1-route::before { left: 54px; top: 126px; }
+      #s1-route::after { right: 46px; bottom: 42px; }
+      #s1-pin { position: absolute; right: 332px; top: 490px; width: 30px; height: 30px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 16px rgba(249,115,22,.18), 0 0 0 32px rgba(249,115,22,.07); }
+      #s1-label { position: absolute; right: 116px; bottom: 190px; font-size: 22px; }
+
+      /* Scene 2 */
+      #s2-copy { position: absolute; left: 116px; top: 190px; }
+      #s2-grid { position: absolute; right: 118px; top: 178px; width: 850px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; transform: rotate(-3deg); }
+      .cuisine { height: 245px; padding: 30px; border-radius: 28px; border: 2px solid rgba(3,2,19,.12); background: var(--white); position: relative; overflow: hidden; box-shadow: 0 20px 45px rgba(103,58,24,.10); }
+      .cuisine:nth-child(2) { transform: translateY(38px); background: #fff1e8; }
+      .cuisine:nth-child(3) { transform: translateY(-12px); background: #fff7ed; }
+      .cuisine:nth-child(4) { transform: translateY(26px); background: #fef3c7; }
+      .cuisine:nth-child(5) { transform: translateY(-20px); background: #fce7f3; }
+      .cuisine:nth-child(6) { transform: translateY(40px); background: #e0f2fe; }
+      .cuisine-name { font-size: 34px; font-weight: 800; letter-spacing: -.04em; }
+      .cuisine-meta { position: absolute; left: 30px; bottom: 28px; font-size: 19px; color: #374151; }
+      .cuisine-mark { position: absolute; right: 26px; top: 22px; font-size: 62px; font-weight: 800; color: rgba(154,52,18,.82); }
+      #s2-rail { position: absolute; left: 116px; top: 630px; width: 670px; border-top: 3px solid var(--orange); }
+
+      /* Scene 3 */
+      #s3-copy { position: absolute; left: 116px; top: 178px; width: 600px; }
+      #s3-panel { right: 120px; top: 170px; width: 760px; height: 660px; padding: 48px; }
+      #s3-panel .order-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 28px; border-bottom: 2px solid var(--line); }
+      .order-row { display: flex; justify-content: space-between; padding: 28px 0; border-bottom: 1px solid var(--line); font-size: 25px; }
+      .order-row span:last-child { font-weight: 800; }
+      .order-total { display: flex; justify-content: space-between; padding-top: 28px; font-size: 34px; font-weight: 850; }
+      #s3-check { position: absolute; left: 116px; bottom: 210px; width: 510px; padding: 24px 30px; border: 3px solid var(--orange); border-radius: 22px; font-size: 24px; font-weight: 800; background: rgba(255,255,255,.75); }
+      #s3-chips { position: absolute; left: 116px; bottom: 126px; display: flex; gap: 16px; }
+
+      /* Scene 4 */
+      #s4-copy { position: absolute; left: 116px; top: 180px; }
+      #s4-map { position: absolute; right: 120px; top: 160px; width: 850px; height: 560px; border-radius: 34px; background: #fff; border: 2px solid rgba(3,2,19,.12); overflow: hidden; box-shadow: 0 28px 70px rgba(103,58,24,.13); }
+      #s4-map::before { content: ""; position: absolute; inset: 58px; border: 2px dashed rgba(249,115,22,.32); border-radius: 50%; transform: rotate(18deg); }
+      #s4-map::after { content: ""; position: absolute; left: 120px; top: 138px; width: 590px; height: 220px; border-top: 5px solid rgba(3,2,19,.12); border-radius: 50%; transform: rotate(-18deg); }
+      #s4-route { position: absolute; left: 186px; top: 322px; width: 476px; height: 5px; background: var(--orange); transform: rotate(-18deg); transform-origin: left center; }
+      #s4-rider { position: absolute; left: 630px; top: 176px; width: 36px; height: 36px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 15px rgba(249,115,22,.17); }
+      #s4-home { position: absolute; left: 156px; top: 318px; width: 26px; height: 26px; border-radius: 50%; background: var(--ink); }
+      #s4-stats { position: absolute; right: 120px; bottom: 128px; display: flex; gap: 20px; }
+      .stat { min-width: 210px; padding: 20px 24px; background: var(--ink); color: #fff; border-radius: 18px; }
+      .stat strong { display: block; font-size: 34px; color: var(--orange); }
+      .stat span { font-size: 17px; color: rgba(255,255,255,.72); }
+      #s4-schedule { position: absolute; left: 116px; bottom: 150px; width: 620px; }
+      #s4-schedule .track { height: 7px; background: var(--line); position: relative; margin-top: 30px; }
+      #s4-schedule .track::before { content: ""; position: absolute; left: 0; top: 0; height: 7px; width: 72%; background: var(--orange); transform-origin: left center; }
+      #s4-schedule .marker { position: absolute; left: 44%; top: -11px; width: 28px; height: 28px; border-radius: 50%; border: 5px solid var(--orange); background: var(--canvas); }
+      #s4-schedule .marker-label { margin-top: 16px; color: var(--muted); font-size: 19px; }
+      #s4-notification { position: absolute; right: 120px; top: 760px; }
+
+      /* Scene 5 */
+      #s5-center { position: absolute; left: 116px; top: 300px; }
+      #s5-stack { position: absolute; right: 120px; top: 330px; width: 760px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      .stack-pill { padding: 22px 24px; border: 2px solid rgba(3,2,19,.14); border-radius: 18px; background: rgba(255,255,255,.76); font-size: 24px; font-weight: 780; }
+      .stack-pill span { display: block; margin-top: 7px; color: var(--muted); font-size: 16px; font-weight: 500; }
+      #s5-rule { position: absolute; left: 116px; bottom: 210px; width: 760px; height: 8px; border-radius: 99px; background: var(--orange); transform-origin: left center; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="foodiexz-showcase" data-start="0" data-width="1920" data-height="1080" data-duration="18">
+      <div id="fxz-ground" class="ground"></div>
+      <div id="fxz-grain" class="grain"></div>
+
+      <section id="scene-1" class="clip" data-start="0" data-duration="3.2" data-track-index="1">
+        <div id="s1-wash-a" class="wash wash-a" data-layout-allow-overflow="true"></div><div id="s1-wash-b" class="wash wash-b" data-layout-allow-overflow="true"></div><div id="s1-line" class="topline"></div>
+        <div id="s1-left"><div id="s1-eyebrow" class="eyebrow orange">full-stack food ordering</div><div id="s1-wordmark" class="wordmark">foodiexz</div><div id="s1-sub" class="subhead">From first craving to front door, one reliable journey.</div></div>
+        <div id="s1-route"></div><div id="s1-pin"></div><div id="s1-label" class="mono">DISCOVER → ORDER → TRACK</div>
+        <div class="footerline"><span>vincenzo-afk/foodiexz</span><span>01 / 05</span></div>
+      </section>
+
+      <section id="scene-2" class="clip" data-start="3.2" data-duration="4" data-track-index="1">
+        <div id="s2-wash-a" class="wash wash-a" data-layout-allow-overflow="true"></div><div id="s2-line" class="topline"></div><div id="s2-index" class="scene-index">02 / discovery layer</div>
+        <div id="s2-copy"><div id="s2-eyebrow" class="eyebrow orange">find your next favorite</div><div id="s2-head" class="headline">Restaurants.<br />Dishes.<br />Possibilities.</div><div id="s2-sub" class="subhead">Explore seeded menus across six cuisine categories, then make the choice yours.</div></div>
+        <div id="s2-grid"><div id="cuisine-1" class="cuisine"><div class="cuisine-mark">01</div><div class="cuisine-name">Indian</div><div class="cuisine-meta">spiced · regional · bold</div></div><div id="cuisine-2" class="cuisine"><div class="cuisine-mark">02</div><div class="cuisine-name">Chinese</div><div class="cuisine-meta">wok · shareable · warm</div></div><div id="cuisine-3" class="cuisine"><div class="cuisine-mark">03</div><div class="cuisine-name">Italian</div><div class="cuisine-meta">slow · simple · bright</div></div><div id="cuisine-4" class="cuisine"><div class="cuisine-mark">04</div><div class="cuisine-name">Mexican</div><div class="cuisine-meta">fresh · layered · lively</div></div><div id="cuisine-5" class="cuisine"><div class="cuisine-mark">05</div><div class="cuisine-name">American</div><div class="cuisine-meta">classic · generous · quick</div></div><div id="cuisine-6" class="cuisine"><div class="cuisine-mark">06</div><div class="cuisine-name">Japanese</div><div class="cuisine-meta">clean · precise · calm</div></div></div>
+        <div id="s2-rail"></div><div class="footerline"><span class="mono">catalog / recommendations / search</span><span>FOODIEXZ</span></div>
+      </section>
+
+      <section id="scene-3" class="clip" data-start="7.2" data-duration="4.2" data-track-index="1">
+        <div id="s3-wash-b" class="wash wash-b" data-layout-allow-overflow="true"></div><div id="s3-line" class="topline"></div><div id="s3-index" class="scene-index">03 / checkout layer</div>
+        <div id="s3-copy"><div id="s3-eyebrow" class="eyebrow orange">reliable by design</div><div id="s3-head" class="headline">The total<br />gets checked.</div><div id="s3-sub" class="subhead">Prices, dish ownership, delivery fees, tax, tips, discounts, and wallet balance are revalidated before an order is created.</div></div>
+        <div id="s3-panel" class="panel"><div class="order-head"><span class="panel-title">Order summary</span><span class="chip"><span class="dot"></span>validated</span></div><div id="order-row-1" class="order-row"><span>Truffle bowl × 1</span><span>₹249</span></div><div id="order-row-2" class="order-row"><span>Delivery</span><span>₹0</span></div><div id="order-row-3" class="order-row"><span>Taxes + tip</span><span>₹37</span></div><div id="order-total" class="order-total"><span>Total</span><span>₹286</span></div></div>
+        <div id="s3-check"><span class="orange">✓</span> Idempotent order creation</div><div id="s3-chips"><span id="s3-chip-1" class="chip">coupon reconciliation</span><span id="s3-chip-2" class="chip">wallet support</span></div><div class="footerline"><span class="mono">POST /api/orders</span><span>FOODIEXZ</span></div>
+      </section>
+
+      <section id="scene-4" class="clip" data-start="11.4" data-duration="4" data-track-index="1">
+        <div id="s4-wash-a" class="wash wash-a" data-layout-allow-overflow="true"></div><div id="s4-line" class="topline"></div><div id="s4-index" class="scene-index">04 / operations layer</div>
+        <div id="s4-copy"><div id="s4-eyebrow" class="eyebrow orange">after the click</div><div id="s4-head" class="headline">Know where<br />dinner is.</div><div id="s4-sub" class="subhead">Live tracking, scheduled orders, and in-app notifications keep the handoff visible.</div></div>
+        <div id="s4-map"><div id="s4-home"></div><div id="s4-route"></div><div id="s4-rider"></div></div><div id="s4-schedule"><div class="eyebrow">schedule ahead</div><div class="track"><div class="marker"></div></div><div class="marker-label mono">15 MINIMUM LEAD TIME</div></div><div id="s4-stats"><div id="s4-stat-1" class="stat"><strong>18 min</strong><span>estimated arrival</span></div><div id="s4-stat-2" class="stat"><strong>72%</strong><span>route progress</span></div></div><div id="s4-notification" class="chip"><span class="dot"></span>order status updated</div><div class="footerline"><span class="mono">tracking / scheduled orders / notifications</span><span>FOODIEXZ</span></div>
+      </section>
+
+      <section id="scene-5" class="clip" data-start="15.4" data-duration="2.6" data-track-index="1">
+        <div id="s5-wash-b" class="wash wash-b" data-layout-allow-overflow="true"></div><div id="s5-line" class="topline"></div><div id="s5-index" class="scene-index">05 / the stack</div>
+        <div id="s5-center"><div id="s5-eyebrow" class="eyebrow orange">built for the full journey</div><div id="s5-wordmark" class="wordmark">foodiexz</div><div id="s5-sub" class="subhead">A focused food-ordering experience, built as a real full-stack project.</div></div>
+        <div id="s5-stack"><div id="stack-1" class="stack-pill">Next.js <span>application runtime</span></div><div id="stack-2" class="stack-pill">React <span>interface layer</span></div><div id="stack-3" class="stack-pill">TypeScript <span>typed product logic</span></div><div id="stack-4" class="stack-pill">Zustand + Zod <span>state + validation</span></div></div><div id="s5-rule"></div><div class="footerline"><span class="mono">github.com/vincenzo-afk/foodiexz</span><span>2026</span></div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+
+      tl.from("#s1-wash-a, #s1-wash-b", { scale: 0.7, opacity: 0, duration: 0.8, stagger: 0.12 }, 0)
+        .from("#s1-line", { scaleX: 0, duration: 0.65, ease: "expo.out" }, 0.18)
+        .from("#s1-eyebrow", { x: -80, opacity: 0, duration: 0.55 }, 0.38)
+        .from("#s1-wordmark", { y: 70, opacity: 0, duration: 0.72, ease: "back.out(1.5)" }, 0.55)
+        .from("#s1-sub", { y: 34, opacity: 0, duration: 0.55 }, 0.93)
+        .from("#s1-route", { scale: 0.65, opacity: 0, duration: 0.8, ease: "power2.out" }, 0.42)
+        .from("#s1-pin", { scale: 0, opacity: 0, duration: 0.5, ease: "back.out(2)" }, 1.05)
+        .from("#s1-label, #scene-1 .footerline", { opacity: 0, y: 18, duration: 0.45, stagger: 0.08 }, 1.3)
+        .to("#s1-route", { rotation: -8, scale: 1.03, duration: 1.2, ease: "sine.inOut" }, 1.25)
+        .to("#s1-pin", { scale: 1.13, duration: 0.9, repeat: 1, yoyo: true, ease: "sine.inOut", overwrite: "auto" }, 1.55);
+
+      tl.from("#s2-wash-a", { scale: 0.6, opacity: 0, duration: 0.7 }, 3.2)
+        .from("#s2-line", { scaleX: 0, duration: 0.55, ease: "expo.out" }, 3.3)
+        .from("#s2-eyebrow", { x: -68, opacity: 0, duration: 0.5 }, 3.42)
+        .from("#s2-head", { y: 80, opacity: 0, duration: 0.75, ease: "back.out(1.35)" }, 3.6)
+        .from("#s2-sub", { y: 30, opacity: 0, duration: 0.5 }, 4.05)
+        .from(".cuisine", { y: 75, opacity: 0, rotation: 3, duration: 0.65, stagger: 0.14, ease: "back.out(1.25)" }, 3.55)
+        .from("#s2-rail", { scaleX: 0, duration: 0.6, ease: "power4.out" }, 4.62)
+        .from("#scene-2 .footerline", { opacity: 0, duration: 0.45 }, 5.2)
+        .to("#cuisine-4", { y: 14, duration: 0.7, yoyo: true, repeat: 1, ease: "sine.inOut" }, 5.5);
+
+      tl.from("#s3-wash-b", { scale: 0.65, opacity: 0, duration: 0.7 }, 7.2)
+        .from("#s3-line", { scaleX: 0, duration: 0.55, ease: "expo.out" }, 7.3)
+        .from("#s3-eyebrow", { x: -65, opacity: 0, duration: 0.48 }, 7.42)
+        .from("#s3-head", { y: 75, opacity: 0, duration: 0.72, ease: "back.out(1.35)" }, 7.58)
+        .from("#s3-sub", { y: 30, opacity: 0, duration: 0.5 }, 8.02)
+        .from("#s3-panel", { x: 120, opacity: 0, duration: 0.75, ease: "power3.out" }, 7.42)
+        .from("#order-row-1, #order-row-2, #order-row-3", { x: 35, opacity: 0, duration: 0.38, stagger: 0.11 }, 8.1)
+        .from("#order-total", { scale: 0.88, opacity: 0, duration: 0.45, ease: "back.out(1.3)" }, 8.55)
+        .from("#s3-check", { x: -60, opacity: 0, duration: 0.5 }, 8.75)
+        .from("#s3-chip-1, #s3-chip-2", { y: 22, opacity: 0, duration: 0.38, stagger: 0.12 }, 9.25)
+        .from("#scene-3 .footerline", { opacity: 0, duration: 0.4 }, 9.8)
+        .to("#s3-check", { scale: 1.04, duration: 0.4, yoyo: true, repeat: 1, ease: "sine.inOut" }, 10.1);
+
+      tl.from("#s4-wash-a", { scale: 0.65, opacity: 0, duration: 0.7 }, 11.4)
+        .from("#s4-line", { scaleX: 0, duration: 0.55, ease: "expo.out" }, 11.5)
+        .from("#s4-eyebrow", { x: -60, opacity: 0, duration: 0.48 }, 11.62)
+        .from("#s4-head", { y: 72, opacity: 0, duration: 0.68, ease: "back.out(1.3)" }, 11.78)
+        .from("#s4-sub", { y: 28, opacity: 0, duration: 0.48 }, 12.2)
+        .from("#s4-map", { x: 115, opacity: 0, duration: 0.72 }, 11.62)
+        .from("#s4-route", { scaleX: 0, duration: 0.85, ease: "power4.out" }, 12.2)
+        .from("#s4-home, #s4-rider", { scale: 0, opacity: 0, duration: 0.42, stagger: 0.18, ease: "back.out(1.8)" }, 12.78)
+        .from("#s4-schedule", { x: -70, opacity: 0, duration: 0.55 }, 12.62)
+        .from("#s4-stats", { y: 32, opacity: 0, duration: 0.52 }, 13.08)
+        .from("#s4-notification", { scale: 0.7, opacity: 0, duration: 0.48, ease: "back.out(1.8)" }, 13.55)
+        .from("#scene-4 .footerline", { opacity: 0, duration: 0.4 }, 14.12)
+        .to("#s4-rider", { x: -100, y: 42, duration: 0.9, ease: "sine.inOut" }, 13.45)
+        .to("#s4-notification", { scale: 1.08, duration: 0.35, yoyo: true, repeat: 1, ease: "sine.inOut" }, 14.2);
+
+      tl.from("#s5-wash-b", { scale: 0.6, opacity: 0, duration: 0.65 }, 15.4)
+        .from("#s5-line", { scaleX: 0, duration: 0.5, ease: "expo.out" }, 15.5)
+        .from("#s5-eyebrow", { x: -60, opacity: 0, duration: 0.42 }, 15.62)
+        .from("#s5-wordmark", { y: 56, opacity: 0, duration: 0.6, ease: "back.out(1.5)" }, 15.76)
+        .from("#s5-sub", { y: 24, opacity: 0, duration: 0.42 }, 16.08)
+        .from(".stack-pill", { x: 70, opacity: 0, duration: 0.42, stagger: 0.12 }, 15.86)
+        .from("#s5-rule", { scaleX: 0, duration: 0.6, ease: "power4.out" }, 16.45)
+        .from("#scene-5 .footerline", { opacity: 0, duration: 0.35 }, 16.78)
+        .to("#s5-rule", { scaleX: 1.06, duration: 0.65, yoyo: true, repeat: 1, ease: "sine.inOut" }, 17.05);
+
+      window.__timelines["foodiexz-showcase"] = tl;
+    </script>
+  </body>
+</html>
